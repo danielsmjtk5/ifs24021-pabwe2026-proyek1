@@ -20,8 +20,12 @@ export function createApp({ staticDir = env.staticDir } = {}) {
           // Mengizinkan Google Fonts yang dipakai front-end.
           'style-src': ["'self'", 'https://fonts.googleapis.com', "'unsafe-inline'"],
           'font-src': ["'self'", 'https://fonts.gstatic.com'],
+          // Hugging Face Spaces menampilkan aplikasi di dalam iframe huggingface.co.
+          'frame-ancestors': ["'self'", ...env.frameAncestors],
         },
       },
+      // X-Frame-Options tidak mendukung daftar origin, jadi dimatikan bila iframe diizinkan.
+      xFrameOptions: env.frameAncestors.length > 0 ? false : { action: 'sameorigin' },
     }),
   );
   app.use(cors({ origin: env.corsOrigins, credentials: true }));

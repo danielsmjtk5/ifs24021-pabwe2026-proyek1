@@ -84,3 +84,20 @@ describe('penyajian build front-end', () => {
     expect(res.status).toBe(404);
   });
 });
+
+describe('header keamanan iframe', () => {
+  it('default hanya mengizinkan origin sendiri', async () => {
+    const res = await request(createApp()).get('/api/health');
+    expect(res.headers['x-frame-options']).toBe('SAMEORIGIN');
+    expect(res.headers['content-security-policy']).toContain("frame-ancestors 'self'");
+  });
+
+  it('FRAME_ANCESTORS mengizinkan iframe Hugging Face', async () => {
+    vi.stubEnv('FRAME_ANCESTORS', 'https://huggingface.co');
+    vi.resetModules();
+    const { createApp: freshApp } = await import('../src/app.js');
+    const res = await request(freshApp()).get('/api/health');
+    expect(res.headers['x-frame-options']).toBeUndefined();
+    expect(res.headers['content-security-policy']).toContain("frame-ancestors 'self' https://huggingface.co");
+  });
+});

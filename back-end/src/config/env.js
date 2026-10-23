@@ -27,6 +27,10 @@ const env = {
   cookieSameSite: process.env.COOKIE_SAMESITE || 'lax',
   cookieSecure: process.env.COOKIE_SECURE === 'true',
   staticDir: process.env.STATIC_DIR || '',
+  frameAncestors: (process.env.FRAME_ANCESTORS || '')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean),
 };
 
 export default env;

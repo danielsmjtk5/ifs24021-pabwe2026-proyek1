@@ -1,8 +1,22 @@
 // Menjalankan back-end (http://localhost:3000) dan front-end (http://localhost:5173) bersamaan.
-import { spawn } from 'node:child_process';
+import { execSync, spawn } from 'node:child_process';
+import fs from 'node:fs';
 import path from 'node:path';
 
 const root = path.resolve(import.meta.dirname, '..');
+
+// Jika dependensi belum terpasang (setup belum dijalankan atau gagal), jalankan setup dulu.
+const required = ['back-end/node_modules/express', 'front-end/node_modules/vite', 'back-end/.env'];
+const missing = required.filter((p) => !fs.existsSync(path.join(root, p)));
+if (missing.length > 0) {
+  console.log(`Belum lengkap: ${missing.join(', ')}. Menjalankan setup terlebih dahulu...`);
+  try {
+    execSync('node scripts/setup.mjs', { cwd: root, stdio: 'inherit', shell: true });
+  } catch {
+    console.error('\nSetup gagal. Perbaiki error di atas, lalu jalankan "bun run setup" lagi.');
+    process.exit(1);
+  }
+}
 const apps = [
   { name: 'back-end ', dir: 'back-end', command: 'npm run dev' },
   { name: 'front-end', dir: 'front-end', command: 'bun run dev' },

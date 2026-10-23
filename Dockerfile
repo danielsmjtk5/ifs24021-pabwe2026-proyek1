@@ -1,8 +1,8 @@
 # Image produksi AsramaCare: satu layanan Express yang menyajikan REST API
-# sekaligus hasil build React. Database SQLite disimpan di volume /data.
+# sekaligus hasil build React. Database SQLite disimpan di /data (hubungkan volume persisten ke path ini bila hosting mendukung).
 
 # 1) Build front-end dengan Bun
-FROM oven/bun:1.2 AS frontend
+FROM oven/bun:1.4 AS frontend
 WORKDIR /app/front-end
 COPY front-end/package.json front-end/bun.lock ./
 RUN bun install --frozen-lockfile
@@ -24,7 +24,6 @@ ENV NODE_ENV=production \
 
 RUN mkdir -p /data && chown -R node:node /data /app
 USER node
-VOLUME ["/data"]
 EXPOSE 3000
 
 # Migrasi berjalan otomatis saat koneksi dibuka; seed hanya membuat admin jika belum ada.

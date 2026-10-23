@@ -42,7 +42,7 @@ Registrasi publik **selalu** membuat akun `penghuni`. Akun admin hanya dibuat me
   Vitest + React Testing Library + user-event + jsdom + `@vitest/coverage-v8`.
 - **Back-end:** Node.js 22, Express 5, SQLite melalui modul bawaan `node:sqlite` (tanpa kompilasi native), bcryptjs, jsonwebtoken,
   cookie-parser, cors, helmet, express-rate-limit, dotenv. Pengujian: Vitest + Supertest.
-- **CI/CD:** Jenkins (`Jenkinsfile`), Docker (`Dockerfile`), target hosting Railway dengan Volume.
+- **CI/CD:** Jenkins (`Jenkinsfile`), Docker (`Dockerfile`), hosting Delcom (`npm install` + `npm start` di root) atau Hugging Face Spaces, webhook GitHub → Jenkins.
 
 ## Struktur folder
 
@@ -74,7 +74,8 @@ ifs24021-pabwe2026-proyek1/
 │       └── features/    # auth, users, reports, dashboard (api/states/pages/...)
 ├── dokumentasi/         # laporan Proyek 1, naskah video, panduan deployment, screenshot
 ├── Dockerfile           # image produksi satu layanan
-├── Jenkinsfile          # pipeline CI/CD
+├── Jenkinsfile          # pipeline CI/CD (dipicu webhook GitHub)
+├── deploy/huggingface/  # Dockerfile + README untuk Hugging Face Spaces
 └── README.md
 ```
 
@@ -100,6 +101,7 @@ bun run setup     # sekali saja: install dependensi, membuat .env, membuat datab
 bun run dev       # menjalankan back-end (:3000) dan front-end (:5173) sekaligus
 ```
 
+Jika dependensi belum terpasang, `bun run dev` otomatis menjalankan setup terlebih dahulu.
 Buka http://localhost:5173. Tekan Ctrl+C untuk menghentikan keduanya. `npm run setup` dan
 `npm run dev` juga bisa dipakai. Jika ingin menjalankan masing-masing secara terpisah, ikuti
 langkah 2 dan 3 di bawah.
@@ -269,8 +271,10 @@ NODE_ENV=production JWT_SECRET=<rahasia-panjang> STATIC_DIR=../front-end/dist np
 ```
 
 Pada mode ini Express menyajikan API di `/api` dan aplikasi React di path lainnya (satu origin, satu URL).
-`Dockerfile` di root membangun image produksi yang sama. Panduan lengkap Railway + Volume untuk SQLite
-persisten dan konfigurasi Jenkins ada di [dokumentasi/deployment.md](dokumentasi/deployment.md).
+`Dockerfile` di root membangun image produksi yang sama. Untuk hosting Node.js seperti panel Delcom,
+cukup `npm install` lalu `npm start` di folder root (build front-end dan seed berjalan otomatis).
+Alternatif gratis lain: Hugging Face Spaces (`deploy/huggingface/`). CI/CD memakai Jenkins yang
+dipicu webhook GitHub. Panduan lengkap ada di [dokumentasi/deployment.md](dokumentasi/deployment.md).
 
 ## Status artefak pengumpulan
 
@@ -279,8 +283,8 @@ persisten dan konfigurasi Jenkins ada di [dokumentasi/deployment.md](dokumentasi
 | Kode front-end & back-end | ✅ selesai, test lulus |
 | Dokumen Proyek 1 (template) | ✅ draf terpisah dari repository, beberapa isian pribadi perlu dilengkapi |
 | Repository GitHub | ⏳ perlu di-push oleh pemilik (lihat perintah di dokumentasi/deployment.md) |
-| Pengujian Jenkins | ⏳ `Jenkinsfile` siap, perlu dijalankan di server Jenkins |
-| URL aplikasi online | ⏳ perlu deploy ke Railway |
+| Pengujian Jenkins | ⏳ `Jenkinsfile` siap (trigger webhook GitHub), perlu dijalankan di server Jenkins |
+| URL aplikasi online | ⏳ https://ifs24021-pabwe2026-proyek1.s1if.cloud (Delcom) — perlu redeploy dan verifikasi |
 | Video YouTube | ⏳ naskah di `dokumentasi/naskah-video.md` |
 
 ## Tangkapan layar
@@ -292,5 +296,3 @@ persisten dan konfigurasi Jenkins ada di [dokumentasi/deployment.md](dokumentasi
 | ![Daftar](dokumentasi/screenshots/05_daftar_laporan.png) | ![Detail](dokumentasi/screenshots/15_status_diperbarui.png) |
 
 Flowchart alur program: [dokumentasi/flowchart.png](dokumentasi/flowchart.png)
-#   i f s 2 4 0 2 1 - p a b w e 2 0 2 6 - p r o y e k 1  
- 

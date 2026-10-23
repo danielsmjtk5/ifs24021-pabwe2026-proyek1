@@ -1,8 +1,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { DatabaseSync } from 'node:sqlite';
 import env from './env.js';
+
+// Driver utama: node:sqlite bawaan Node.js >= 22.13 (tanpa kompilasi native). Pada server dengan
+// Node.js lebih lama, scripts/build.mjs memasang better-sqlite3 yang API-nya sama untuk dipakai di sini.
+let DatabaseSync;
+try {
+  ({ DatabaseSync } = await import('node:sqlite'));
+} catch /* c8 ignore start */ {
+  DatabaseSync = (await import('better-sqlite3')).default;
+} /* c8 ignore stop */
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const migrationsDir = path.resolve(here, '../../database/migrations');
@@ -58,7 +66,6 @@ export function openDatabase(dbPath = env.dbPath) {
   if (dbPath !== ':memory:') {
     fs.mkdirSync(path.dirname(path.resolve(dbPath)), { recursive: true });
   }
-  // node:sqlite adalah driver SQLite bawaan Node.js, sehingga tidak perlu kompilasi native.
   const database = new DatabaseSync(dbPath);
   if (dbPath !== ':memory:') database.exec('PRAGMA journal_mode = WAL');
   database.exec('PRAGMA foreign_keys = ON');
