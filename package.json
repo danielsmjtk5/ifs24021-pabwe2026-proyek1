@@ -1,0 +1,10 @@
+{
+  "name": "ifs24021-pabwe2026-proyek1",
+  "private": true,
+  "description": "AsramaCare - skrip bantu untuk menjalankan back-end dan front-end dari folder root",
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "dev": "node scripts/dev.mjs",
+    "test": "npm --prefix back-end test && cd front-end && bun run test"
+  }
+}

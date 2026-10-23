@@ -1,0 +1,8 @@
+**/node_modules
+**/coverage
+**/reports
+**/.env
+back-end/data/*.db*
+front-end/dist
+.git
+dokumentasi
