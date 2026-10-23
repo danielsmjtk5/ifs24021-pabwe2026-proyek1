@@ -1,6 +1,6 @@
 import AppError from '../utils/AppError.js';
 
-export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const EMAIL_PATTERN = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/;
 
 export function asTrimmedString(value) {
   return typeof value === 'string' ? value.trim() : '';

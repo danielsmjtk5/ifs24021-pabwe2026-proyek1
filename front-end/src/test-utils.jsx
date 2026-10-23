@@ -58,11 +58,18 @@ export function LocationDisplay() {
 
 export function renderWithProviders(
   ui,
-  { preloadedState, store = setupStore(preloadedState), route = '/', path = '/', extraRoutes = null } = {},
+  {
+    preloadedState,
+    store = setupStore(preloadedState),
+    route = '/',
+    path = '/',
+    extraRoutes = null,
+    history = [],
+  } = {},
 ) {
   const result = render(
     <Provider store={store}>
-      <MemoryRouter initialEntries={[route]}>
+      <MemoryRouter initialEntries={[...history, route]}>
         <Routes>
           <Route path={path} element={ui} />
           {extraRoutes}

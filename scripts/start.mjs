@@ -8,6 +8,18 @@ const root = path.resolve(import.meta.dirname, '..');
 const backEnd = path.join(root, 'back-end');
 const env = process.env;
 
+// Panel hosting (mis. Delcom) dapat menyimpan PORT, JWT_SECRET, dll. di file .env di root.
+// Variabel yang sudah ada di environment tidak ditimpa.
+const rootEnv = path.join(root, '.env');
+if (fs.existsSync(rootEnv)) {
+  for (const line of fs.readFileSync(rootEnv, 'utf8').split(/\r?\n/)) {
+    const match = line.match(/^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$/);
+    if (!match || env[match[1]] !== undefined) continue;
+    env[match[1]] = match[2].replace(/^(['"])(.*)\1$/, '$2');
+  }
+  console.log('Memuat variabel dari .env di root');
+}
+
 const appUrl = env.APP_URL || '';
 const defaults = {
   NODE_ENV: 'production',

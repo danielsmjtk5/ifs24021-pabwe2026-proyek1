@@ -1,6 +1,7 @@
 // Build produksi dari folder root (dipakai hosting seperti Delcom lewat `npm install` / `npm run build`):
 // memasang dependensi back-end, lalu memasang dependensi dan mem-build front-end ke front-end/dist.
 import { execSync } from 'node:child_process';
+import fs from 'node:fs';
 import path from 'node:path';
 
 const root = path.resolve(import.meta.dirname, '..');
@@ -30,8 +31,12 @@ try {
   run('npm install --no-save --no-audit --no-fund better-sqlite3@^12', 'back-end');
 }
 
-// Bun dipakai jika ada; jika tidak, npm dengan package-lock.json front-end.
-if (hasCommand('bun')) {
+// Paket dari Jenkins (latest-app.zip) sudah berisi front-end/dist hasil build beserta penanda .prebuilt.
+const prebuilt = path.join(root, 'front-end', 'dist', '.prebuilt');
+if (fs.existsSync(prebuilt) && fs.existsSync(path.join(root, 'front-end', 'dist', 'index.html'))) {
+  console.log('front-end/dist sudah di-build oleh Jenkins, build front-end dilewati');
+} else if (hasCommand('bun')) {
+  // Bun dipakai jika ada; jika tidak, npm dengan package-lock.json front-end.
   run('bun install --frozen-lockfile', 'front-end');
   run('bun run build', 'front-end');
 } else {

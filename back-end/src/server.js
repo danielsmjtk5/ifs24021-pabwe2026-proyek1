@@ -5,8 +5,10 @@ import env from './config/env.js';
 getDb();
 const app = createApp();
 
-const server = app.listen(env.port, () => {
-  console.log(`AsramaCare API berjalan di http://localhost:${env.port} (${env.nodeEnv})`);
+// Host opsional (mis. APP_HOST=127.0.0.1 dari panel hosting); default semua interface.
+const host = process.env.APP_HOST || process.env.HOST || undefined;
+const server = app.listen(env.port, host, () => {
+  console.log(`AsramaCare API berjalan di http://${host || 'localhost'}:${env.port} (${env.nodeEnv})`);
 });
 
 function shutdown() {

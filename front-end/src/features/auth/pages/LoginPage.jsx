@@ -29,7 +29,7 @@ function LoginPage() {
     const result = await dispatch(loginUser({ email: email.trim(), password }));
     setSubmitting(false);
     if (loginUser.fulfilled.match(result)) {
-      navigate(location.state?.from || '/', { replace: true });
+      void navigate(location.state?.from || '/', { replace: true });
     } else {
       setServerError(result.payload.message);
       setErrors(result.payload.errors || {});

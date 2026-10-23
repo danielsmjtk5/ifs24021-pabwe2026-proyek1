@@ -26,7 +26,7 @@ function ReportEditPage() {
     const result = await dispatch(updateReport({ id, values }));
     if (updateReport.fulfilled.match(result)) {
       toastSuccess('Laporan berhasil diperbarui');
-      navigate(`/reports/${id}`);
+      void navigate(`/reports/${id}`);
     } else {
       setServerErrors(result.payload.errors || {});
       alertError(result.payload.message);

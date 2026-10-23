@@ -61,7 +61,7 @@ export function initials(name = '') {
   );
 }
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/;
 
 function lengthError(value, label, min, max) {
   const v = (value || '').trim();

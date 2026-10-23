@@ -15,8 +15,9 @@ export function confirmDanger({ title, text, confirmText = 'Ya, hapus' }) {
   }).then((result) => result.isConfirmed);
 }
 
+// Notifikasi tidak perlu ditunggu; `void` menandai promise sengaja diabaikan.
 export function toastSuccess(title) {
-  return Swal.fire({
+  void Swal.fire({
     toast: true,
     position: 'top-end',
     icon: 'success',
@@ -28,5 +29,5 @@ export function toastSuccess(title) {
 }
 
 export function alertError(text) {
-  return Swal.fire({ icon: 'error', title: 'Gagal', text, confirmButtonColor: '#1d4ed8' });
+  void Swal.fire({ icon: 'error', title: 'Gagal', text, confirmButtonColor: '#1d4ed8' });
 }

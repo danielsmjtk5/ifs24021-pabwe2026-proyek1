@@ -97,8 +97,15 @@ describe('ReportDetailPage - penghuni', () => {
   });
 
   it('tombol kembali', async () => {
-    const { user } = renderDetail(RESIDENT, { 'GET /api/reports/7': { data: { report: makeReport() } } });
+    mockApi({ 'GET /api/reports/7': { data: { report: makeReport() } } });
+    const { user } = renderWithProviders(<ReportDetailPage />, {
+      preloadedState: authState(RESIDENT),
+      path: '/reports/:id',
+      route: '/reports/7',
+      history: ['/my-reports'],
+    });
     await user.click(await screen.findByRole('button', { name: /Kembali/ }));
+    expect(screen.getByTestId('location')).toHaveTextContent('/my-reports');
   });
 });
 

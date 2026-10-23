@@ -1,207 +1,461 @@
-// Pipeline CI/CD AsramaCare
-// Dipicu otomatis oleh webhook GitHub (push ke repository) melalui https://<jenkins>/github-webhook/.
-// Agent cukup memiliki sh, curl, dan tar: stage "Setup" memasang Node.js 22 dan Bun bila belum ada.
-// Deployment: memicu redeploy website di panel Delcom (DEPLOY_TARGET=delcom, default) atau
-// Factory rebuild Space Hugging Face (DEPLOY_TARGET=huggingface). Token disimpan di Jenkins Credentials.
+// Pipeline CI/CD AsramaCare untuk Jenkins Delcom (https://jenkins.delcom.org).
+// Mengikuti panduan "Delcom CI/CD": dipicu webhook GitHub, setiap tahap berjalan di container Docker,
+// lalu aplikasi dikemas (latest-app.zip), dipublikasikan ke userContent Jenkins, dan dikirim ke
+// API redeploy Delcom.
+//
+// Variabel URL_REDEPLOY, URL_PROGRESS, WEBSITE_ID, dan DEPLOY_TOKEN TIDAK ditulis di file ini.
+// Isi lewat Configure job -> "Prepare an environment for the run" -> Properties Content
+// (salin dari "Konfigurasi Deploy" website di panel Delcom).
 pipeline {
+
   agent any
 
   triggers {
     githubPush()
   }
 
-  parameters {
-    booleanParam(name: 'DEPLOY', defaultValue: true, description: 'Deploy setelah semua tahap lulus')
-    choice(name: 'DEPLOY_TARGET', choices: ['delcom', 'huggingface'], description: 'Tujuan deployment')
-    string(name: 'APP_URL', defaultValue: 'https://ifs24021-pabwe2026-proyek1.s1if.cloud', description: 'URL aplikasi online untuk verifikasi health check')
-    string(name: 'DELCOM_URL_REDEPLOY', defaultValue: 'https://delcom.org/api/dws/websites/redeploy', description: 'URL_REDEPLOY dari panel Delcom')
-    string(name: 'DELCOM_URL_PROGRESS', defaultValue: 'https://delcom.org/api/dws/websites/progress', description: 'URL_PROGRESS dari panel Delcom')
-    string(name: 'HF_SPACE', defaultValue: '', description: 'Khusus huggingface: ID Space, mis. danielsmjtk5/asramacare')
-  }
-
   options {
     timestamps()
-    timeout(time: 30, unit: 'MINUTES')
+    skipDefaultCheckout(true)
+    // Hentikan tahap berikutnya bila ada publisher yang menandai build UNSTABLE/FAILURE.
+    skipStagesAfterUnstable()
+    timeout(time: 60, unit: 'MINUTES')
     buildDiscarder(logRotator(numToKeepStr: '20'))
   }
 
   environment {
     CI = 'true'
-    NODE_ENV = 'test'
-    TOOLS_DIR = "${env.HOME}/.asramacare-tools"
-    PATH = "${env.HOME}/.asramacare-tools/node/bin:${env.HOME}/.asramacare-tools/bun/node_modules/.bin:${env.PATH}"
   }
 
   stages {
+
+    // ============================================================
+    // CHECKOUT
+    // ============================================================
     stage('Checkout') {
+      agent {
+        docker {
+          image 'oven/bun:alpine'
+          reuseNode true
+        }
+      }
       steps {
         checkout scm
       }
     }
 
-    stage('Setup') {
+    // ============================================================
+    // INSTALL DEPENDENCIES
+    // ============================================================
+    stage('Install Dependencies') {
+      parallel {
+        stage('Front-end (Bun)') {
+          agent {
+            docker {
+              image 'oven/bun:alpine'
+              reuseNode true
+            }
+          }
+          steps {
+            dir('front-end') {
+              sh '''
+                set -e
+                echo "=== Installing front-end dependencies ==="
+                bun install --frozen-lockfile
+              '''
+            }
+          }
+        }
+        stage('Back-end (npm)') {
+          agent {
+            docker {
+              image 'node:24-alpine'
+              reuseNode true
+            }
+          }
+          steps {
+            dir('back-end') {
+              sh '''
+                set -e
+                echo "=== Installing back-end dependencies ==="
+                npm ci --no-audit --no-fund
+              '''
+            }
+          }
+        }
+      }
+    }
+
+    // ============================================================
+    // TEST
+    // ============================================================
+    stage('Test') {
+      agent {
+        docker {
+          image 'node:24-alpine'
+          reuseNode true
+        }
+      }
       steps {
         sh '''
-          # Pasang Node.js 22 di folder tools jika agent belum punya Node >= 22.13 (dibutuhkan node:sqlite).
-          if ! node -e "const [a,b]=process.versions.node.split('.').map(Number); process.exit(a>22||(a===22&&b>=13)?0:1)" 2>/dev/null; then
-            NODE_VERSION=v22.22.0
-            mkdir -p "$TOOLS_DIR"
-            curl -fsSL "https://nodejs.org/dist/$NODE_VERSION/node-$NODE_VERSION-linux-x64.tar.gz" -o "$TOOLS_DIR/node.tar.gz"
-            rm -rf "$TOOLS_DIR/node" && mkdir -p "$TOOLS_DIR/node"
-            tar -xzf "$TOOLS_DIR/node.tar.gz" -C "$TOOLS_DIR/node" --strip-components=1
-            rm "$TOOLS_DIR/node.tar.gz"
-          fi
-          # Pasang Bun lewat npm (tidak butuh unzip) jika belum ada.
-          if ! command -v bun >/dev/null 2>&1; then
-            npm install --prefix "$TOOLS_DIR/bun" --no-save bun@1.4
-          fi
-          node -v
-          npm -v
-          bun -v
+          set -e
+          echo "=== Running back-end tests with coverage ==="
+          (cd back-end && npm run test:ci)
+
+          echo "=== Running front-end tests with coverage ==="
+          (cd front-end && npx vitest run --coverage --reporter=default --reporter=junit --outputFile.junit=reports/junit.xml)
+
+          # Path di lcov relatif terhadap tiap sub-proyek; ubah agar relatif ke root untuk SonarQube.
+          mkdir -p coverage
+          sed 's#^SF:#SF:back-end/#' back-end/coverage/lcov.info > coverage/back-end.lcov
+          sed 's#^SF:#SF:front-end/#' front-end/coverage/lcov.info > coverage/front-end.lcov
+          echo "=== Tests Passed ==="
+        '''
+      }
+      post {
+        always {
+          junit allowEmptyResults: true, testResults: 'back-end/reports/junit.xml, front-end/reports/junit.xml'
+        }
+      }
+    }
+
+    // ============================================================
+    // BUILD FRONT-END + SMOKE TEST
+    // ============================================================
+    stage('Build & Smoke Test') {
+      agent {
+        docker {
+          image 'node:24-alpine'
+          reuseNode true
+        }
+      }
+      environment {
+        NODE_ENV = 'production'
+        PORT = '3999'
+        JWT_SECRET = 'smoke-test-secret-yang-hanya-dipakai-di-jenkins-0123456789'
+      }
+      steps {
+        sh '''
+          set -e
+          echo "=== Building front-end ==="
+          (cd front-end && npm run build)
+          # Penanda agar server Delcom tidak perlu mem-build ulang front-end (lihat scripts/build.mjs).
+          touch front-end/dist/.prebuilt
+
+          echo "=== Smoke test server produksi ==="
+          cd back-end
+          export DB_PATH="$PWD/data/smoke.db" STATIC_DIR="$PWD/../front-end/dist"
+          rm -f data/smoke.db*
+          node src/server.js > smoke.log 2>&1 &
+          SERVER_PID=$!
+          trap "kill $SERVER_PID" EXIT
+          node -e '
+            const url = "http://localhost:3999";
+            const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+            (async () => {
+              for (let i = 0; i < 20; i += 1) {
+                try {
+                  const health = await (await fetch(url + "/api/health")).json();
+                  const page = await (await fetch(url + "/")).text();
+                  if (health.data.status !== "ok" || !page.includes("id=\\"root\\"")) throw new Error("respon tidak sesuai");
+                  console.log("Smoke test OK:", JSON.stringify(health.data));
+                  return;
+                } catch (error) {
+                  await wait(1000);
+                }
+              }
+              console.error("Smoke test gagal");
+              process.exit(1);
+            })();
+          '
         '''
       }
     }
 
-    stage('Install Dependencies') {
-      parallel {
-        stage('Back-end') {
-          steps {
-            dir('back-end') { sh 'npm ci' }
-          }
-        }
-        stage('Front-end') {
-          steps {
-            dir('front-end') { sh 'bun install --frozen-lockfile' }
-          }
-        }
-      }
-    }
-
-    stage('Test Back-end') {
-      steps {
-        dir('back-end') { sh 'npm run test:ci' }
-      }
-    }
-
-    stage('Test Front-end') {
-      steps {
-        dir('front-end') { sh 'bun run test:ci' }
-      }
-    }
-
-    stage('Build Front-end') {
-      environment { NODE_ENV = 'production' }
-      steps {
-        dir('front-end') { sh 'bun run build' }
-      }
-    }
-
-    stage('Smoke Test') {
-      // Menjalankan server produksi lokal (SQLite sementara) dan memeriksa health check + halaman utama.
-      environment {
-        NODE_ENV = 'production'
-        PORT = '3999'
-        DB_PATH = "${env.WORKSPACE}/back-end/data/smoke.db"
-        STATIC_DIR = "${env.WORKSPACE}/front-end/dist"
-        JWT_SECRET = 'smoke-test-secret-yang-hanya-dipakai-di-jenkins-0123456789'
-      }
-      steps {
-        dir('back-end') {
-          sh '''
-            rm -f data/smoke.db*
-            node src/server.js > smoke.log 2>&1 &
-            SERVER_PID=$!
-            trap "kill $SERVER_PID" EXIT
-            for i in $(seq 1 20); do
-              curl -fsS http://localhost:3999/api/health && break
-              sleep 1
-            done
-            curl -fsS http://localhost:3999/api/health | grep '"status":"ok"'
-            curl -fsS http://localhost:3999/ | grep '<div id="root">'
+    // ============================================================
+    // TRIVY SECURITY SCAN
+    // ============================================================
+    stage('Trivy Security Scan') {
+      agent {
+        docker {
+          image 'aquasec/trivy:0.74.0'
+          reuseNode true
+          args '''
+            --entrypoint=""
+            -e HOME=/tmp
+            -e XDG_CACHE_HOME=/tmp/.cache
           '''
         }
-      }
-    }
-
-    stage('Deploy ke Delcom') {
-      when {
-        expression { return params.DEPLOY && params.DEPLOY_TARGET == 'delcom' }
-      }
-      steps {
-        // Kredensial Secret text: "delcom-website-id" (WEBSITE_ID) dan "delcom-deploy-token" (DEPLOY_TOKEN).
-        withCredentials([
-          string(credentialsId: 'delcom-website-id', variable: 'WEBSITE_ID'),
-          string(credentialsId: 'delcom-deploy-token', variable: 'DEPLOY_TOKEN')
-        ]) {
-          sh '''
-            BODY=$(printf '{"website_id":"%s","token":"%s"}' "$WEBSITE_ID" "$DEPLOY_TOKEN")
-            echo "Memicu redeploy Delcom..."
-            curl -fsS -X POST "$DELCOM_URL_REDEPLOY" \
-              -H "Content-Type: application/json" -H "Accept: application/json" \
-              -H "Authorization: Bearer $DEPLOY_TOKEN" -d "$BODY"
-            echo
-            # Memantau progres deploy (maks. 10 menit); berhenti jika status selesai/gagal.
-            for i in $(seq 1 60); do
-              RESP=$(curl -fsS -X POST "$DELCOM_URL_PROGRESS" \
-                -H "Content-Type: application/json" -H "Accept: application/json" \
-                -H "Authorization: Bearer $DEPLOY_TOKEN" -d "$BODY" || true)
-              echo "Progres: $RESP"
-              if echo "$RESP" | grep -qiE '"status" *: *"(success|succeeded|done|completed|finished|selesai)"'; then exit 0; fi
-              if echo "$RESP" | grep -qiE '"status" *: *"(failed|error|gagal)"'; then echo "Deploy Delcom gagal" >&2; exit 1; fi
-              sleep 10
-            done
-            echo "Status progres tidak dikenali; lanjut ke verifikasi health check."
-          '''
-        }
-      }
-    }
-
-    stage('Deploy ke Hugging Face') {
-      when {
-        expression { return params.DEPLOY && params.DEPLOY_TARGET == 'huggingface' && params.HF_SPACE?.trim() }
-      }
-      steps {
-        // Kredensial "hf-token" (Secret text): access token Hugging Face dengan izin write.
-        withCredentials([string(credentialsId: 'hf-token', variable: 'HF_TOKEN')]) {
-          sh '''
-            curl -fsS -X POST -H "Authorization: Bearer $HF_TOKEN" \
-              "https://huggingface.co/api/spaces/${HF_SPACE}/restart?factory=true"
-          '''
-        }
-      }
-    }
-
-    stage('Verify Deployment') {
-      when {
-        expression { return params.DEPLOY }
       }
       steps {
         sh '''
-          URL="${APP_URL}"
-          if [ "$DEPLOY_TARGET" = "huggingface" ] && [ -n "$HF_SPACE" ]; then
-            URL="https://$(echo "$HF_SPACE" | tr '[:upper:]' '[:lower:]' | tr '/_.' '---').hf.space"
-          fi
-          sleep 30   # beri waktu server memulai ulang aplikasi
-          for i in $(seq 1 60); do
-            if curl -fsS "$URL/api/health" | grep '"status":"ok"'; then
-              echo "Deployment terverifikasi: $URL"
+          set -e
+          mkdir -p .trivy-cache || true
+
+          echo "=== Trivy Version ==="
+          trivy --version
+
+          echo "=== Trivy Scan ==="
+          trivy fs \
+            --cache-dir .trivy-cache \
+            --scanners vuln \
+            --severity HIGH,CRITICAL \
+            --format sarif \
+            --output trivy-results.sarif \
+            --exit-code 1 \
+            .
+
+          ls -lh trivy-results.sarif
+        '''
+      }
+      post {
+        always {
+          // failOnError false: kegagalan karena HIGH/CRITICAL berasal dari trivy --exit-code 1.
+          recordIssues(
+            enabledForFailure: true,
+            failOnError: false,
+            tools: [
+              sarif(id: 'trivy', name: 'Trivy Security', pattern: 'trivy-results.sarif')
+            ]
+          )
+        }
+      }
+    }
+
+    // ============================================================
+    // SONARQUBE ANALYSIS
+    // ============================================================
+    stage('SonarQube Analysis') {
+      agent {
+        docker {
+          image 'sonarsource/sonar-scanner-cli:latest'
+          reuseNode true
+          args '--network cicd-network'
+        }
+      }
+      steps {
+        withSonarQubeEnv('SonarQube') {
+          sh '''
+            set -e
+            echo "=== SonarQube Analysis ==="
+            sonar-scanner
+          '''
+        }
+      }
+    }
+
+    // ============================================================
+    // QUALITY GATE
+    // ============================================================
+    stage('Quality Gate') {
+      steps {
+        timeout(time: 30, unit: 'MINUTES') {
+          waitForQualityGate abortPipeline: true
+        }
+      }
+    }
+
+    // ============================================================
+    // PACKAGE APPLICATION
+    // ============================================================
+    stage('Package Application') {
+      agent {
+        docker {
+          image 'node:24-alpine'
+          reuseNode true
+          args '-u root'
+        }
+      }
+      steps {
+        sh '''
+          set -e
+          apk add --no-cache zip unzip
+          rm -f latest-app.zip
+
+          # Kode sumber + hasil build front-end (front-end/dist). Dependensi dipasang di server.
+          zip -r latest-app.zip . \
+            -x "node_modules/*" -x "*/node_modules/*" \
+            -x ".git/*" \
+            -x ".env" -x ".env.*" -x "*/.env" -x "*/.env.*" \
+            -x "coverage/*" -x "*/coverage/*" \
+            -x "*/reports/*" \
+            -x "back-end/data/*" -x "back-end/smoke.log" \
+            -x ".trivy-cache/*" -x ".scannerwork/*" \
+            -x "latest-app.zip" -x "trivy-results.sarif" \
+            -x "dokumentasi/*"
+
+          ls -lh latest-app.zip
+          unzip -l latest-app.zip | tail -1
+        '''
+      }
+    }
+
+    // ============================================================
+    // PUBLISH APPLICATION
+    // ============================================================
+    stage('Publish Application') {
+      steps {
+        archiveArtifacts(artifacts: 'latest-app.zip', fingerprint: true, allowEmptyArchive: false)
+
+        script {
+          def appName = env.JOB_NAME
+            .replaceAll('[^a-zA-Z0-9._-]', '-')
+            .replaceAll('-+', '-')
+            .replaceAll('^-|-$', '')
+          def buildId = env.BUILD_NUMBER
+
+          echo "Application Name: ${appName}"
+          echo "Build ID: ${buildId}"
+
+          sh """
+            set -e
+            docker exec cicd-jenkins mkdir -p "/var/jenkins_home/userContent/applications/${appName}/${buildId}"
+            docker cp latest-app.zip "cicd-jenkins:/var/jenkins_home/userContent/applications/${appName}/${buildId}/latest-app.zip"
+            docker exec cicd-jenkins ls -lh "/var/jenkins_home/userContent/applications/${appName}/${buildId}/latest-app.zip"
+          """
+
+          def jenkinsBaseUrl = env.BUILD_URL
+            .substring(0, env.BUILD_URL.indexOf('/job/'))
+            .replace('localhost', 'host.docker.internal')
+
+          env.ARTIFACT_URL = "${jenkinsBaseUrl}/userContent/applications/${appName}/${buildId}/latest-app.zip"
+          echo "Artifact URL: ${env.ARTIFACT_URL}"
+        }
+      }
+    }
+
+    // ============================================================
+    // DEPLOY APPLICATION
+    // ============================================================
+    stage('Deploy Application') {
+      agent {
+        docker {
+          image 'curlimages/curl:8.15.0'
+          reuseNode true
+          args '--network cicd-network'
+        }
+      }
+      steps {
+        script {
+          echo "Artifact URL: ${env.ARTIFACT_URL}"
+
+          // 1. Request redeployment
+          def redeployResponse = sh(
+            script: '''
+              set -e
+              curl -sS --fail-with-body \
+                -X POST "$URL_REDEPLOY" \
+                -H "Content-Type: application/json" \
+                -d "{
+                  \\"token_access\\": \\"$DEPLOY_TOKEN\\",
+                  \\"website_id\\": \\"$WEBSITE_ID\\",
+                  \\"source_url\\": \\"$ARTIFACT_URL\\",
+                  \\"source_type\\": \\"jenkins\\"
+                }"
+            ''',
+            returnStdout: true
+          ).trim()
+          echo "Redeploy Response: ${redeployResponse}"
+
+          // 2. Polling deployment progress
+          def maxAttempts = 120
+          def attempt = 0
+          def deploymentStatus = 'IN_PROGRESS'
+
+          while (deploymentStatus == 'IN_PROGRESS') {
+            attempt++
+            if (attempt > maxAttempts) {
+              error("Deployment timeout. Status masih IN_PROGRESS setelah ${maxAttempts} attempts.")
+            }
+            sleep time: 5, unit: 'SECONDS'
+            echo "=== Checking Deployment Progress (${attempt}/${maxAttempts}) ==="
+
+            def progressResponse = sh(
+              script: '''
+                set -e
+                curl -sS --fail-with-body \
+                  -X POST "$URL_PROGRESS" \
+                  -H "Content-Type: application/json" \
+                  -d "{
+                    \\"token_access\\": \\"$DEPLOY_TOKEN\\",
+                    \\"website_id\\": \\"$WEBSITE_ID\\"
+                  }"
+              ''',
+              returnStdout: true
+            ).trim()
+            echo "Progress Response: ${progressResponse}"
+
+            def json = readJSON text: progressResponse
+            deploymentStatus = json?.data?.status?.toString()?.toUpperCase()
+            if (!deploymentStatus) {
+              error('Response progress tidak memiliki data.status')
+            }
+            echo "Deployment Status: ${deploymentStatus}"
+
+            if (deploymentStatus == 'SUCCESS') {
+              echo '✅ DEPLOYMENT SUCCESS'
+              break
+            }
+            if (deploymentStatus == 'FAIL') {
+              echo "========== DEPLOYMENT LOG ==========\n${json?.data?.log ?: 'Deployment failed tanpa log.'}"
+              error("Deployment gagal untuk website ${WEBSITE_ID}")
+            }
+            echo 'Deployment masih berjalan...'
+          }
+        }
+      }
+    }
+
+    // ============================================================
+    // VERIFY DEPLOYMENT (opsional: isi APP_URL di Properties Content)
+    // ============================================================
+    stage('Verify Deployment') {
+      when {
+        expression { return env.APP_URL?.trim() }
+      }
+      agent {
+        docker {
+          image 'curlimages/curl:8.15.0'
+          reuseNode true
+        }
+      }
+      steps {
+        sh '''
+          for i in $(seq 1 30); do
+            if curl -fsS "$APP_URL/api/health" | grep '"status":"ok"'; then
+              echo "Deployment terverifikasi: $APP_URL"
               exit 0
             fi
             sleep 10
           done
-          echo "Health check $URL gagal" >&2
+          echo "Health check $APP_URL gagal" >&2
           exit 1
         '''
       }
     }
   }
 
+  // ================================================================
+  // POST ACTIONS
+  // ================================================================
   post {
     always {
-      junit allowEmptyResults: true, testResults: 'back-end/reports/junit.xml, front-end/reports/junit.xml'
-      archiveArtifacts allowEmptyArchive: true, artifacts: 'back-end/coverage/**, front-end/coverage/**, front-end/dist/**, back-end/smoke.log'
+      archiveArtifacts(
+        artifacts: 'trivy-results.sarif, back-end/coverage/**, front-end/coverage/**, back-end/smoke.log',
+        allowEmptyArchive: true
+      )
     }
-    success { echo 'Pipeline AsramaCare berhasil.' }
-    failure { echo 'Pipeline AsramaCare gagal. Periksa log tahap yang merah.' }
+    success {
+      echo "✅ PIPELINE SUCCESS — Result: ${currentBuild.currentResult}"
+      echo "📦 Artifact: ${env.ARTIFACT_URL ?: '(not published)'}"
+      echo '🚀 Website berhasil dideploy.'
+    }
+    failure {
+      echo "❌ PIPELINE FAILED — Result: ${currentBuild.currentResult}"
+      echo 'Periksa log stage yang merah / Console Output untuk penyebab gagal.'
+    }
+    unstable {
+      echo "⚠️ PIPELINE UNSTABLE — Result: ${currentBuild.currentResult}"
+    }
   }
 }

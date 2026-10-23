@@ -20,9 +20,11 @@ export function seed(db, { demo = false, admin } = {}) {
   const summary = { admin: ensureUser({ ...admin, role: 'admin' }), residents: 0, reports: 0 };
   if (!demo) return summary;
 
+  // Kredensial akun demo (hanya dipakai saat SEED_DEMO=true); dapat diganti lewat SEED_DEMO_PASSWORD.
+  const demoLogin = process.env.SEED_DEMO_PASSWORD || 'Penghuni123';
   const residents = [
-    { name: 'Budi Santoso', email: 'budi@asramacare.test', room: 'A-101', password: 'Penghuni123' },
-    { name: 'Sari Lestari', email: 'sari@asramacare.test', room: 'B-204', password: 'Penghuni123' },
+    { name: 'Budi Santoso', email: 'budi@asramacare.test', room: 'A-101', password: demoLogin },
+    { name: 'Sari Lestari', email: 'sari@asramacare.test', room: 'B-204', password: demoLogin },
   ].map((r) => {
     const result = ensureUser({ ...r, role: 'penghuni' });
     if (result.created) summary.residents += 1;

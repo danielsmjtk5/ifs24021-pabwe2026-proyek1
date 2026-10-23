@@ -32,7 +32,7 @@ function RegisterPage() {
     );
     setSubmitting(false);
     if (registerUser.fulfilled.match(result)) {
-      navigate('/', { replace: true });
+      void navigate('/', { replace: true });
     } else {
       setServerError(result.payload.message);
       setErrors(result.payload.errors || {});

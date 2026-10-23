@@ -15,7 +15,7 @@ function ReportCreatePage() {
     const result = await dispatch(createReport(values));
     if (createReport.fulfilled.match(result)) {
       toastSuccess('Laporan berhasil dibuat');
-      navigate(`/reports/${result.payload.id}`);
+      void navigate(`/reports/${result.payload.id}`);
     } else {
       setServerErrors(result.payload.errors || {});
       alertError(result.payload.message);

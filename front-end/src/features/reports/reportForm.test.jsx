@@ -86,8 +86,14 @@ describe('ReportCreatePage', () => {
 
   it('tombol batal kembali ke halaman sebelumnya', async () => {
     mockApi();
-    const { user } = renderWithProviders(<ReportCreatePage />, { preloadedState: authState(RESIDENT) });
+    const { user } = renderWithProviders(<ReportCreatePage />, {
+      preloadedState: authState(RESIDENT),
+      route: '/reports/new',
+      path: '/reports/new',
+      history: ['/my-reports'],
+    });
     await user.click(screen.getByRole('button', { name: 'Batal' }));
+    expect(screen.getByTestId('location')).toHaveTextContent('/my-reports');
   });
 
   it('error tanpa detail field', async () => {

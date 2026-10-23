@@ -42,7 +42,7 @@ Registrasi publik **selalu** membuat akun `penghuni`. Akun admin hanya dibuat me
   Vitest + React Testing Library + user-event + jsdom + `@vitest/coverage-v8`.
 - **Back-end:** Node.js 22, Express 5, SQLite melalui modul bawaan `node:sqlite` (tanpa kompilasi native), bcryptjs, jsonwebtoken,
   cookie-parser, cors, helmet, express-rate-limit, dotenv. Pengujian: Vitest + Supertest.
-- **CI/CD:** Jenkins (`Jenkinsfile`), Docker (`Dockerfile`), hosting Delcom (`npm install` + `npm start` di root) atau Hugging Face Spaces, webhook GitHub → Jenkins.
+- **CI/CD:** Jenkins (`Jenkinsfile`), Docker (`Dockerfile`), Jenkins Delcom (webhook GitHub, Trivy, SonarQube via `sonar-project.properties`) → panel Delcom.
 
 ## Struktur folder
 
@@ -75,6 +75,7 @@ ifs24021-pabwe2026-proyek1/
 ├── dokumentasi/         # laporan Proyek 1, naskah video, panduan deployment, screenshot
 ├── Dockerfile           # image produksi satu layanan
 ├── Jenkinsfile          # pipeline CI/CD (dipicu webhook GitHub)
+├── sonar-project.properties  # konfigurasi SonarQube
 ├── deploy/huggingface/  # Dockerfile + README untuk Hugging Face Spaces
 └── README.md
 ```
@@ -271,10 +272,9 @@ NODE_ENV=production JWT_SECRET=<rahasia-panjang> STATIC_DIR=../front-end/dist np
 ```
 
 Pada mode ini Express menyajikan API di `/api` dan aplikasi React di path lainnya (satu origin, satu URL).
-`Dockerfile` di root membangun image produksi yang sama. Untuk hosting Node.js seperti panel Delcom,
-cukup `npm install` lalu `npm start` di folder root (build front-end dan seed berjalan otomatis).
-Alternatif gratis lain: Hugging Face Spaces (`deploy/huggingface/`). CI/CD memakai Jenkins yang
-dipicu webhook GitHub. Panduan lengkap ada di [dokumentasi/deployment.md](dokumentasi/deployment.md).
+`Dockerfile` di root membangun image produksi yang sama. Deployment utama: Jenkins Delcom (dipicu webhook GitHub)
+menjalankan test, Trivy, SonarQube, lalu mengirim `latest-app.zip` ke panel Delcom yang menjalankan
+`npm install` + `npm start` di root. Alternatif: Hugging Face Spaces (`deploy/huggingface/`). Panduan lengkap ada di [dokumentasi/deployment.md](dokumentasi/deployment.md).
 
 ## Status artefak pengumpulan
 

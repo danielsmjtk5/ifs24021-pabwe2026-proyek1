@@ -65,7 +65,7 @@ function ReportDetailPage() {
     const result = await dispatch(deleteReport(report.id));
     if (deleteReport.fulfilled.match(result)) {
       toastSuccess('Laporan berhasil dihapus');
-      navigate(user.role === 'admin' ? '/admin/reports' : '/my-reports', { replace: true });
+      void navigate(user.role === 'admin' ? '/admin/reports' : '/my-reports', { replace: true });
     } else {
       alertError(result.payload.message);
     }

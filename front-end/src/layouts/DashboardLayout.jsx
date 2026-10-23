@@ -20,7 +20,7 @@ function DashboardLayout() {
     });
     if (!ok) return;
     await dispatch(logoutUser());
-    navigate('/auth/login', { replace: true });
+    void navigate('/auth/login', { replace: true });
   };
 
   // Saat logout atau sesi berakhir, user menjadi null sebelum halaman berpindah.
