@@ -68,7 +68,13 @@ pipeline {
 
                     echo "=== Running Tests with Coverage ==="
 
-                    npx vitest run --coverage
+                    if [ -f angular.json ]; then
+                        echo "Framework: Angular"
+                        npx ng test --coverage
+                    else
+                        echo "Framework: React, Next.js, Vue, Nuxt, Svelte, or SvelteKit"
+                        npx vitest run --coverage
+                    fi
 
                     echo "=== Tests Passed ==="
                 '''
@@ -99,7 +105,7 @@ pipeline {
                     mkdir -p .trivy-cache || true
 
                     echo "======================================"
-                    echo "         TRIVY SECURITY SCAN"
+                    echo "        TRIVY SECURITY SCAN"
                     echo "======================================"
 
                     echo "=== Trivy Version ==="
@@ -196,7 +202,7 @@ pipeline {
                     set -e
 
                     echo "======================================"
-                    echo "      CREATING APPLICATION PACKAGE"
+                    echo "       CREATING APPLICATION PACKAGE"
                     echo "======================================"
 
                     apk add --no-cache zip unzip
@@ -209,9 +215,18 @@ pipeline {
                         -x ".env" \
                         -x ".env.*" \
                         -x "coverage/*" \
+                        -x ".next/*" \
+                        -x "out/*" \
+                        -x ".nuxt/*" \
+                        -x ".output/*" \
+                        -x ".svelte-kit/*" \
+                        -x ".angular/*" \
+                        -x "dist/*" \
+                        -x "build/*" \
                         -x ".trivy-cache/*" \
                         -x "latest-app.zip" \
-                        -x "trivy-results.sarif"
+                        -x "trivy-results.sarif" \
+                        -x ".docs/*"
 
                     echo "=== Application Package Created ==="
 
@@ -265,7 +280,7 @@ pipeline {
                         set -e
 
                         echo "======================================"
-                        echo "          PUBLISHING USER CONTENT"
+                        echo "       PUBLISHING USER CONTENT"
                         echo "======================================"
 
                         docker exec cicd-jenkins \
@@ -295,7 +310,7 @@ pipeline {
                         "${jenkinsBaseUrl}/userContent/applications/${appName}/${buildId}/latest-app.zip"
 
                     echo "======================================"
-                    echo "         APPLICATION PUBLISHED"
+                    echo "       APPLICATION PUBLISHED"
                     echo "======================================"
 
                     echo "Artifact URL:"
@@ -320,7 +335,7 @@ pipeline {
                 script {
 
                     echo "=========================================="
-                    echo "         START APPLICATION DEPLOYMENT"
+                    echo "       START APPLICATION DEPLOYMENT"
                     echo "=========================================="
 
                     echo "Artifact URL:"
@@ -425,7 +440,7 @@ pipeline {
 
                             echo ""
                             echo "=========================================="
-                            echo "           ✅ DEPLOYMENT SUCCESS"
+                            echo "       ✅ DEPLOYMENT SUCCESS"
                             echo "=========================================="
 
                             break
@@ -439,7 +454,7 @@ pipeline {
 
                             echo ""
                             echo "=========================================="
-                            echo "        ❌ DEPLOYMENT FAILED"
+                            echo "       ❌ DEPLOYMENT FAILED"
                             echo "=========================================="
 
                             def deploymentLog =
@@ -466,7 +481,7 @@ pipeline {
 
                     echo ""
                     echo "=========================================="
-                    echo "         DEPLOYMENT FINISHED"
+                    echo "       DEPLOYMENT FINISHED"
                     echo "=========================================="
                 }
             }
@@ -487,7 +502,7 @@ pipeline {
 
         success {
             echo "=========================================="
-            echo "           ✅ PIPELINE SUCCESS"
+            echo "       ✅ PIPELINE SUCCESS"
             echo "=========================================="
             echo "Result: ${currentBuild.currentResult}"
             echo "📦 Artifact: ${env.ARTIFACT_URL ?: '(not published)'}"
@@ -496,7 +511,7 @@ pipeline {
 
         failure {
             echo "=========================================="
-            echo "          ❌ PIPELINE FAILED"
+            echo "       ❌ PIPELINE FAILED"
             echo "=========================================="
             echo "Result: ${currentBuild.currentResult}"
             echo "Periksa log stage yang merah / Console Output untuk penyebab gagal."
@@ -504,7 +519,7 @@ pipeline {
 
         unstable {
             echo "=========================================="
-            echo "          ⚠️ PIPELINE UNSTABLE"
+            echo "       ⚠️ PIPELINE UNSTABLE"
             echo "=========================================="
             echo "Result: ${currentBuild.currentResult}"
         }
