@@ -26,6 +26,14 @@ describe('AuthLayout', () => {
 });
 
 describe('LoginPage', () => {
+  it('memiliki selector yang dipakai audit otomatis (#username, #password, #btn-submit)', () => {
+    mockApi();
+    const { container } = renderLogin();
+    expect(container.querySelector('#username')).toBe(screen.getByLabelText('Email'));
+    expect(container.querySelector('#password')).toBe(screen.getByLabelText('Password'));
+    expect(container.querySelector('#btn-submit')).toBe(screen.getByRole('button', { name: 'Masuk' }));
+  });
+
   it('menampilkan validasi saat field kosong tanpa memanggil API', async () => {
     const fetchMock = mockApi();
     const { user } = renderLogin();

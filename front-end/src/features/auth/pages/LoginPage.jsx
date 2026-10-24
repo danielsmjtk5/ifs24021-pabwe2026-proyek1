@@ -54,8 +54,10 @@ function LoginPage() {
       )}
 
       <form className="mt-6 space-y-5" onSubmit={onSubmit} noValidate>
+        {/* id username/password/btn-submit dipakai audit otomatis Delcom untuk login. */}
         <FormField
-          id="email"
+          id="username"
+          name="username"
           label="Email"
           type="email"
           autoComplete="email"
@@ -66,6 +68,7 @@ function LoginPage() {
         />
         <FormField
           id="password"
+          name="password"
           label="Password"
           type="password"
           autoComplete="current-password"
@@ -74,7 +77,7 @@ function LoginPage() {
           onChange={onPasswordChange}
           error={errors.password}
         />
-        <button type="submit" className="btn-primary w-full py-3" disabled={submitting}>
+        <button id="btn-submit" type="submit" className="btn-primary w-full py-3" disabled={submitting}>
           <IconLogin2 className="h-5 w-5" aria-hidden="true" />
           {submitting ? 'Memproses...' : 'Masuk'}
         </button>
