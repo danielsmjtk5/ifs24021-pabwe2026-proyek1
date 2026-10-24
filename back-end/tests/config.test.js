@@ -72,6 +72,17 @@ describe('penyajian build front-end', () => {
     const page = await request(app).get('/reports/12');
     expect(page.status).toBe(200);
     expect(page.text).toContain('id="root"');
+    
+    // Permintaan bersyarat (cache browser/auditor) tetap mendapat 200, bukan 304.
+    for (const route of ['/', '/auth/login']) {
+      const again = await request(app)
+        .get(route)
+        .set('If-None-Match', '*')
+        .set('If-Modified-Since', new Date().toUTCString());
+      expect(again.status).toBe(200);
+      expect(again.headers['cache-control']).toBe('no-store');
+      expect(again.headers.etag).toBeUndefined();
+    }
 
     const api = await request(app).get('/api/tidak-ada');
     expect(api.status).toBe(404);
