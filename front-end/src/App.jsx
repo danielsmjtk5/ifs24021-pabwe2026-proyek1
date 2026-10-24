@@ -5,11 +5,11 @@ import NotFoundPage from './components/NotFoundPage';
 import { GuestOnly, RequireAuth, RequireRole } from './components/RouteGuards';
 import { ErrorState, LoadingState } from './components/States';
 import AuthLayout from './features/auth/layouts/AuthLayout';
+import LoginPage from './features/auth/pages/LoginPage';
 import { fetchCurrentUser, sessionExpired } from './features/auth/states/authSlice';
 import { setUnauthorizedHandler } from './helpers/apiHelper';
 
-// Halaman dan layout dimuat terpisah (code splitting) agar JavaScript awal lebih kecil.
-const LoginPage = lazy(() => import('./features/auth/pages/LoginPage'));
+// Halaman selain login dan layout dimuat terpisah (code splitting) agar JavaScript awal tetap ringkas.
 const RegisterPage = lazy(() => import('./features/auth/pages/RegisterPage'));
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
 const DashboardPage = lazy(() => import('./features/dashboard/pages/DashboardPage'));

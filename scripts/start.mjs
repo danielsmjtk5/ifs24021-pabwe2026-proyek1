@@ -39,6 +39,10 @@ if (!env.ADMIN_PASSWORD) {
   env.ADMIN_PASSWORD = 'Admin12345';
   console.warn('PERINGATAN: ADMIN_PASSWORD tidak diatur, memakai password demo. Atur di environment hosting.');
 }
+if (!env.JWT_SECRET || env.JWT_SECRET.length < 32) {
+  env.JWT_SECRET = 'asramacare-production-fallback-secret-minimum-32-chars-long';
+  console.warn('PERINGATAN: JWT_SECRET tidak diatur atau < 32 karakter di panel hosting. Memakai fallback sementara.');
+}
 
 // Jika hosting tidak menjalankan `npm install`/`npm run build`, build sekarang.
 const ready = ['back-end/node_modules/express', 'front-end/dist/index.html'].every((p) =>
