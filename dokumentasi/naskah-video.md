@@ -16,47 +16,44 @@ node -v      # 20 atau lebih baru
 bun -v       # 1.x
 ```
 
-## 2. Clone repository (±30 detik)
+## 2. Clone kedua repository (±30 detik)
 ```bash
+git clone https://github.com/<username>/ifs24021-pabwe2026-proyek1-backend.git
 git clone https://github.com/<username>/ifs24021-pabwe2026-proyek1.git
-cd ifs24021-pabwe2026-proyek1
 ```
-Buka folder di VS Code, jelaskan singkat folder `back-end`, `front-end`, `dokumentasi`.
-
-> Alternatif singkat: dari folder root jalankan `bun run setup` lalu `bun run dev`.
-> Untuk video, langkah terpisah di bawah lebih baik karena menunjukkan setiap tahap.
+Jelaskan bahwa back-end (REST API) dan front-end (React) berada di dua repository terpisah.
 
 ## 3. Instalasi dependensi back-end (±1 menit)
 ```bash
-cd back-end
-npm install
+cd ifs24021-pabwe2026-proyek1-backend
+bun install
 ```
 
 ## 4. Konfigurasi environment (±1 menit)
 ```bash
 cp .env.example .env
 ```
-Buka `.env`, jelaskan `PORT`, `DB_PATH`, `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`.
+Buka `.env`, jelaskan `PORT`, `DATABASE_URL` (lokal: file SQLite; produksi Vercel: Turso), `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`.
 Tekankan bahwa `.env` tidak di-commit ke GitHub.
 
 ## 5. Inisialisasi SQLite (±1 menit)
 ```bash
-npm run seed
+bun run seed
 ```
 Tunjukkan output "Seed selesai ..." dan file `data/asramacare.db` yang terbentuk.
 Jelaskan tabel `users`, `reports`, `report_history` di `database/migrations/001_init.sql`.
 
 ## 6. Menjalankan back-end (±1 menit)
 ```bash
-npm run dev
+bun run dev
 ```
 Buka http://localhost:3000/api/health di browser → status ok.
-(Opsional) Jalankan `npm test` di terminal lain untuk memperlihatkan 75 test lulus.
+(Opsional) Jalankan `bun run test` di terminal lain untuk memperlihatkan 91 test lulus.
 
 ## 7. Menjalankan front-end (±1 menit)
 Terminal baru:
 ```bash
-cd front-end
+cd ifs24021-pabwe2026-proyek1
 bun install
 cp .env.example .env
 bun run dev
@@ -77,4 +74,4 @@ Buka http://localhost:5173.
 
 ## 9. Penutup (±30 detik)
 "Data tersimpan di SQLite sehingga tetap ada setelah server dimatikan dan dijalankan lagi."
-Matikan back-end (Ctrl+C), jalankan `npm run dev` lagi, refresh → data masih ada. Terima kasih.
+Matikan back-end (Ctrl+C), jalankan `bun run dev` lagi, refresh → data masih ada. Terima kasih.

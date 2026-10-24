@@ -1,9 +1,0 @@
-**/node_modules
-**/coverage
-back-end/reports
-front-end/reports
-**/.env
-back-end/data/*.db*
-front-end/dist
-.git
-dokumentasi
