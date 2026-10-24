@@ -19,8 +19,18 @@ function ReportEditPage() {
     dispatch(fetchReport(id));
   }, [dispatch, id]);
 
-  if (status === 'failed') return <ErrorState message={error} onRetry={() => dispatch(fetchReport(id))} />;
-  if (!item || String(item.id) !== id) return <LoadingState />;
+  if (status === 'failed' || !item || String(item.id) !== id) {
+    return (
+      <>
+        <h1 className="sr-only">Memuat laporan untuk diubah</h1>
+        {status === 'failed' ? (
+          <ErrorState message={error} onRetry={() => dispatch(fetchReport(id))} />
+        ) : (
+          <LoadingState />
+        )}
+      </>
+    );
+  }
   if (!item.permissions.canEdit) return <Navigate to={`/reports/${id}`} replace />;
 
   const onSubmit = async (values) => {

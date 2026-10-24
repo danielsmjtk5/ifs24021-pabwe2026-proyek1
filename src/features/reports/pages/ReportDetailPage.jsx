@@ -50,11 +50,19 @@ function ReportDetailPage() {
   if (status === 'failed') {
     return (
       <div className="card">
+        <h1 className="sr-only">Detail laporan</h1>
         <ErrorState message={error} onRetry={() => dispatch(fetchReport(id))} />
       </div>
     );
   }
-  if (!report || String(report.id) !== id) return <LoadingState message="Memuat detail laporan..." />;
+  if (!report || String(report.id) !== id) {
+    return (
+      <>
+        <h1 className="sr-only">Detail laporan</h1>
+        <LoadingState message="Memuat detail laporan..." />
+      </>
+    );
+  }
 
   const { permissions } = report;
 

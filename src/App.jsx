@@ -33,6 +33,7 @@ function App() {
   if (sessionStatus !== 'ready') {
     return (
       <main className="flex min-h-screen items-center justify-center">
+        <h1 className="sr-only">AsramaCare</h1>
         <LoadingState message="Menyiapkan AsramaCare..." />
       </main>
     );
@@ -41,6 +42,7 @@ function App() {
   if (sessionError) {
     return (
       <main className="flex min-h-screen items-center justify-center">
+        <h1 className="sr-only">AsramaCare</h1>
         <ErrorState message={sessionError} onRetry={() => dispatch(fetchCurrentUser())} />
       </main>
     );
@@ -50,6 +52,7 @@ function App() {
     <Suspense
       fallback={
         <main className="flex min-h-screen items-center justify-center">
+          <h1 className="sr-only">AsramaCare</h1>
           <LoadingState message="Memuat halaman..." />
         </main>
       }
