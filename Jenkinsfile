@@ -249,8 +249,27 @@ pipeline {
     // ============================================================
     stage('Quality Gate') {
       steps {
-        timeout(time: 30, unit: 'MINUTES') {
-          waitForQualityGate abortPipeline: true
+        script {
+          // waitForQualityGate memeriksa status task SonarQube saat dipanggil, lalu menunggu webhook.
+          // Jika webhook SonarQube -> Jenkins belum terpasang, langkah itu menunggu tanpa akhir, jadi
+          // status diperiksa ulang setiap 30 detik (maks. 10 menit) tanpa bergantung pada webhook.
+          def qualityGate = null
+          for (int attempt = 1; attempt <= 20 && qualityGate == null; attempt++) {
+            try {
+              timeout(time: 30, unit: 'SECONDS') {
+                qualityGate = waitForQualityGate(abortPipeline: false)
+              }
+            } catch (org.jenkinsci.plugins.workflow.steps.FlowInterruptedException e) {
+              echo "Analisis SonarQube belum selesai, cek ulang (${attempt}/20)..."
+            }
+          }
+          if (qualityGate == null) {
+            error('Quality Gate tidak selesai dalam 10 menit. Periksa Background Tasks proyek di SonarQube.')
+          }
+          echo "Quality Gate: ${qualityGate.status}"
+          if (qualityGate.status != 'OK') {
+            error("Quality Gate gagal (${qualityGate.status}). Lihat detail di SonarQube.")
+          }
         }
       }
     }

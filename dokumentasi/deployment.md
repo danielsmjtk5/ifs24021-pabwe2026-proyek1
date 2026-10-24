@@ -27,7 +27,7 @@ satu URL, cookie sesi first-party, dan tidak perlu konfigurasi CORS lintas domai
 | --- | --- | --- |
 | Vercel / Netlify | Hanya front-end | Fungsi serverless tidak punya filesystem untuk SQLite |
 | Railway / Render / Fly.io | Ya, tetapi | Meminta kartu kredit untuk verifikasi akun |
-| **Delcom (panel kampus, nodejs-express)** | **Ya (dipilih)** | Gratis untuk mahasiswa, deploy dari GitHub, HTTPS + domain `*.s1if.cloud` |
+| **Delcom (panel kampus, bun-express)** | **Ya (dipilih)** | Gratis untuk mahasiswa, deploy dari GitHub, HTTPS + domain `*.s1if.cloud` |
 | Hugging Face Spaces (Docker) | Ya (alternatif) | Gratis tanpa kartu kredit, mendukung Dockerfile, HTTPS otomatis |
 
 Keterbatasan Space gratis Hugging Face: storage bersifat **sementara**. Database SQLite dibuat ulang setiap
@@ -46,7 +46,7 @@ Sumber `git` bersamaan dengan Jenkins (deploy gagal dengan `destination path '.'
 ### 3.1 Panel Delcom
 
 1. **Domain → Tambah**: buat domain, mis. `ifs24021-pabwe2026-proyek1` (paket `s1if.cloud`).
-2. **Website → Tambah**: pilih domain tersebut, **Teknologi** `nodejs-express`, **Database** `none`
+2. **Website → Tambah**: pilih domain tersebut, **Teknologi** `bun-express`, **Database** `none`
    (SQLite berupa file), **Sumber** `none`, lalu **Deploy**.
 3. Buka website → salin **Konfigurasi Deploy** (`URL_PROGRESS`, `URL_REDEPLOY`, `WEBSITE_ID`,
    `DEPLOY_TOKEN`) untuk Jenkins. Token ini rahasia: jangan ditulis di repository.
@@ -61,7 +61,11 @@ Sumber `git` bersamaan dengan Jenkins (deploy gagal dengan `destination path '.'
    `scripts/start.mjs` membaca `.env` di root ini.
 
 Paket dari Jenkins sudah berisi `front-end/dist` (penanda `front-end/dist/.prebuilt`), sehingga di
-server cukup `npm install` (memasang dependensi back-end) lalu `npm start` / `node server.js`.
+server cukup `bun install` (memasang dependensi back-end) lalu `bun run start` / `bun server.js`.
+Pilih teknologi **bun-express**: server Delcom untuk teknologi ini hanya memiliki Bun. Pada teknologi
+`nodejs-express`, deploy gagal dengan `bash: npm: command not found`. Back-end berjalan di Bun
+karena Bun menyediakan modul `node:sqlite` (diuji dengan Bun 1.4 tanpa Node.js/npm). Skrip yang
+sama tetap bisa dipakai dengan `npm install` + `npm start` di hosting Node.js lain.
 `scripts/start.mjs` memberi default produksi: `STATIC_DIR=front-end/dist`,
 `DB_PATH=back-end/data/asramacare.db`, `COOKIE_SECURE=true` (karena `FORCE_HTTPS=true`),
 `CORS_ORIGIN=$APP_URL`. Bila Node.js server < 22.13, `better-sqlite3` dipasang sebagai driver cadangan.
@@ -156,6 +160,13 @@ Langkah (Jenkins: Delcom → **Redirect Website → Jenkins**):
    default* → **Create project**. Lalu **Project Settings → Webhooks → Create**: Name `Jenkins`,
    URL `http://cicd-jenkins:8080/sonarqube-webhook/`. Jika kriteria *SonarQube Grading* meminta
    nama proyek lain, ubah `sonar.projectKey`/`sonar.projectName` di `sonar-project.properties`.
+   **Penting:** buat proyek SonarQube *sebelum* pipeline pertama berjalan. Jika scanner dari Jenkins
+   berjalan lebih dulu, SonarQube membuat proyek itu otomatis atas nama akun Jenkins, sehingga
+   proyek tidak tampil di akun Anda dan pembuatan proyek ditolak (*"A similar key already exists"*).
+   Solusinya: minta asisten/admin SonarQube menghapus proyek tersebut atau memberi Anda hak akses,
+   atau pakai project key baru (buat dulu di SonarQube, lalu ubah `sonar.projectKey` dan
+   `sonar.projectName`, commit, push). Tahap *Quality Gate* tetap selesai walau webhook SonarQube
+   belum terpasang, karena status diperiksa ulang setiap 30 detik (maks. 10 menit).
 6. Push ke GitHub → Jenkins otomatis membuat job baru → lihat **Pipeline Overview**.
 7. Pengumpulan: pada konten kursus **Jenkins Grading** dan **SonarQube Grading**, cek kriteria nama
    job/repo/proyek, lalu klik **Sinkronisasi Hasil**. Jika konten kursus menyediakan isi

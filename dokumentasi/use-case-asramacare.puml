@@ -1,0 +1,73 @@
+@startuml use-case-asramacare
+!pragma layout smetana
+left to right direction
+skinparam dpi 200
+skinparam shadowing false
+skinparam defaultFontName "DejaVu Sans"
+skinparam defaultFontSize 12
+skinparam actorStyle awesome
+skinparam usecase {
+  BackgroundColor #EFF6FF
+  BorderColor #1D4ED8
+  ArrowColor #334155
+}
+skinparam rectangle {
+  BorderColor #94A3B8
+  BackgroundColor #FFFFFF
+}
+
+title Use Case Diagram AsramaCare\n<size:11>Registrasi publik selalu membuat akun penghuni; akun admin dibuat melalui seed</size>
+
+actor "Pengunjung" as Guest
+actor "Pengguna\nTerautentikasi" as User
+actor "Penghuni" as Resident
+actor "Admin\nAsrama" as Admin
+
+Resident -|> User
+Admin -|> User
+
+rectangle "AsramaCare" {
+  usecase "Registrasi akun penghuni" as UC_REG
+  usecase "Login" as UC_LOGIN
+  usecase "Logout" as UC_LOGOUT
+  usecase "Melihat dashboard\n& statistik laporan" as UC_DASH
+  usecase "Melihat daftar laporan\n(cari, filter, urut, halaman)" as UC_LIST
+  usecase "Melihat detail laporan\n& riwayat status" as UC_DETAIL
+  usecase "Mengelola profil\n(nama, kamar)" as UC_PROFILE
+  usecase "Mengubah password" as UC_PASS
+
+  usecase "Membuat laporan kerusakan" as UC_CREATE
+  usecase "Melihat laporan saya" as UC_MINE
+  usecase "Mengedit laporan\n(status menunggu)" as UC_EDIT
+  usecase "Menghapus laporan sendiri\n(status menunggu)" as UC_DEL_OWN
+
+  usecase "Mengubah status laporan\n(diproses / selesai / ditolak)" as UC_STATUS
+  usecase "Mengisi alasan penolakan\n(jika status ditolak)" as UC_REASON
+  usecase "Menambah catatan\ntindak lanjut" as UC_NOTE
+  usecase "Menghapus laporan apa pun" as UC_DEL_ANY
+  usecase "Melihat kontak pelapor\n(email, kamar)" as UC_CONTACT
+}
+
+Guest --> UC_REG
+Guest --> UC_LOGIN
+
+User --> UC_LOGOUT
+User --> UC_DASH
+User --> UC_LIST
+User --> UC_DETAIL
+User --> UC_PROFILE
+User --> UC_PASS
+
+Resident --> UC_CREATE
+Resident --> UC_MINE
+Resident --> UC_EDIT
+Resident --> UC_DEL_OWN
+
+Admin --> UC_STATUS
+Admin --> UC_NOTE
+Admin --> UC_DEL_ANY
+Admin --> UC_CONTACT
+
+UC_REASON .> UC_STATUS : <<extend>>
+
+@enduml

@@ -295,4 +295,4 @@ menjalankan test, Trivy, SonarQube, lalu mengirim `latest-app.zip` ke panel Delc
 | **Daftar laporan** | **Detail laporan (admin)** |
 | ![Daftar](dokumentasi/screenshots/05_daftar_laporan.png) | ![Detail](dokumentasi/screenshots/15_status_diperbarui.png) |
 
-Flowchart alur program: [dokumentasi/flowchart.png](dokumentasi/flowchart.png)
+Flowchart alur program: [dokumentasi/flowchart.png](dokumentasi/flowchart.png) · Use case diagram: [dokumentasi/use-case-asramacare.png](dokumentasi/use-case-asramacare.png) (sumber PlantUML: `dokumentasi/use-case-asramacare.puml`)
