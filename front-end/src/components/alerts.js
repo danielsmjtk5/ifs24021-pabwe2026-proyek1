@@ -21,9 +21,9 @@ export function confirmDanger({ title, text, confirmText = 'Ya, hapus' }) {
   }).then((result) => result.isConfirmed);
 }
 
-// Notifikasi tidak perlu ditunggu; `void` menandai promise sengaja diabaikan.
+// Notifikasi tidak perlu ditunggu oleh pemanggil.
 export function toastSuccess(title) {
-  void fire({
+  return fire({
     toast: true,
     position: 'top-end',
     icon: 'success',
@@ -35,7 +35,7 @@ export function toastSuccess(title) {
 }
 
 export function alertError(text) {
-  void fire({
+  return fire({
     icon: 'error',
     title: 'Gagal',
     text,

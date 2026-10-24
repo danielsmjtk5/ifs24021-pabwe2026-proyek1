@@ -9,7 +9,7 @@ export const COOKIE_NAME = 'asramacare_token';
  * didukung agar API mudah diuji dengan Postman/curl.
  */
 function readToken(req) {
-  if (req.cookies && req.cookies[COOKIE_NAME]) return req.cookies[COOKIE_NAME];
+  if (req.cookies?.[COOKIE_NAME]) return req.cookies[COOKIE_NAME];
   const header = req.headers.authorization || '';
   if (header.startsWith('Bearer ')) return header.slice(7);
   return null;

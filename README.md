@@ -249,7 +249,7 @@ npm run test:coverage    # laporan coverage di back-end/coverage/
 
 # front-end
 cd front-end
-bun run test             # 133 test komponen, halaman, state, helper, App
+bun run test             # 134 test komponen, halaman, state, helper, App
 bun run test:coverage    # laporan coverage di front-end/coverage/
 ```
 
@@ -261,7 +261,7 @@ Hasil terakhir (dijalankan saat pengembangan):
 | Bagian | Test | Statements | Branches | Functions | Lines |
 | --- | --- | --- | --- | --- | --- |
 | Back-end | 82 lulus | 100% | 100% | 100% | 100% |
-| Front-end | 133 lulus | 100% | 100% | 100% | 100% |
+| Front-end | 134 lulus | 100% | 100% | 100% | 100% |
 
 ## Build dan deployment
 

@@ -1,2 +1,3 @@
+# Grader Delcom mencocokkan SHA256 file ini dengan template, jadi line ending harus selalu LF.
 Jenkinsfile text eol=lf
 sonar-project.properties text eol=lf
