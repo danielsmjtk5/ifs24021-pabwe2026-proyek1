@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
@@ -19,9 +20,10 @@ export function createApp({ staticDir = env.staticDir } = {}) {
     helmet({
       contentSecurityPolicy: {
         directives: {
-          // Mengizinkan Google Fonts yang dipakai front-end.
-          'style-src': ["'self'", 'https://fonts.googleapis.com', "'unsafe-inline'"],
-          'font-src': ["'self'", 'https://fonts.gstatic.com'],
+          // Font di-host sendiri; 'unsafe-inline' untuk style bawaan SweetAlert2.
+          'style-src': ["'self'", "'unsafe-inline'"],
+          // Vite menyisipkan subset font kecil sebagai data: URI.
+          'font-src': ["'self'", 'data:'],
           // Hugging Face Spaces menampilkan aplikasi di dalam iframe huggingface.co.
           'frame-ancestors': ["'self'", ...env.frameAncestors],
         },
@@ -30,6 +32,8 @@ export function createApp({ staticDir = env.staticDir } = {}) {
       xFrameOptions: env.frameAncestors.length > 0 ? false : { action: 'sameorigin' },
     }),
   );
+  // Kompresi gzip untuk respon teks (JS, CSS, HTML, JSON) agar halaman lebih cepat dimuat.
+  app.use(compression());
   app.use(cors({ origin: env.corsOrigins, credentials: true }));
   app.use(express.json({ limit: '100kb' }));
   app.use(cookieParser());
@@ -44,7 +48,17 @@ export function createApp({ staticDir = env.staticDir } = {}) {
     // agar halaman seperti /auth/login dapat diakses auditor dan versi terbaru langsung terpakai.
     // res.end dipakai langsung karena res.send/sendFile bisa membalas 304 untuk permintaan bersyarat.
     const indexHtml = fs.readFileSync(path.join(distDir, 'index.html'));
-    app.use(express.static(distDir, { index: false }));
+    // File assets/* memakai nama ber-hash, jadi aman di-cache lama oleh browser.
+    app.use(
+      express.static(distDir, {
+        index: false,
+        setHeaders: (res, filePath) => {
+          if (filePath.includes(`${path.sep}assets${path.sep}`)) {
+            res.set('Cache-Control', 'public, max-age=31536000, immutable');
+          }
+        },
+      }),
+    );
     app.get('/{*splat}', (req, res) => {
       res.status(200).type('html').set('Cache-Control', 'no-store').end(indexHtml);
     });

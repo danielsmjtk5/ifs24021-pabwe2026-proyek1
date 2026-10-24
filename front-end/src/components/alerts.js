@@ -1,7 +1,13 @@
-import Swal from 'sweetalert2';
+// SweetAlert2 dimuat saat pertama kali dibutuhkan agar tidak membebani JavaScript awal.
+// Promise import disimpan supaya modul hanya diunduh sekali.
+let swalModule;
+const fire = (options) => {
+  swalModule ??= import('sweetalert2');
+  return swalModule.then(({ default: Swal }) => Swal.fire(options));
+};
 
 export function confirmDanger({ title, text, confirmText = 'Ya, hapus' }) {
-  return Swal.fire({
+  return fire({
     title,
     text,
     icon: 'warning',
@@ -17,7 +23,7 @@ export function confirmDanger({ title, text, confirmText = 'Ya, hapus' }) {
 
 // Notifikasi tidak perlu ditunggu; `void` menandai promise sengaja diabaikan.
 export function toastSuccess(title) {
-  void Swal.fire({
+  void fire({
     toast: true,
     position: 'top-end',
     icon: 'success',
@@ -29,5 +35,10 @@ export function toastSuccess(title) {
 }
 
 export function alertError(text) {
-  void Swal.fire({ icon: 'error', title: 'Gagal', text, confirmButtonColor: '#1d4ed8' });
+  void fire({
+    icon: 'error',
+    title: 'Gagal',
+    text,
+    confirmButtonColor: '#1d4ed8',
+  });
 }

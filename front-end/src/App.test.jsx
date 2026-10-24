@@ -29,7 +29,7 @@ function renderApp(route = '/') {
 
 describe('App (integrasi)', () => {
   it('menampilkan loading lalu mengarahkan tamu ke login', async () => {
-    mockApi({ 'GET /api/auth/me': { status: 401, message: 'Silakan login terlebih dahulu' } });
+    mockApi({ 'GET /api/auth/session': { data: { user: null } } });
     renderApp('/reports');
     expect(screen.getByText('Menyiapkan AsramaCare...')).toBeInTheDocument();
     expect(await screen.findByRole('heading', { name: 'Masuk ke akun' })).toBeInTheDocument();
@@ -37,7 +37,7 @@ describe('App (integrasi)', () => {
 
   it('alur login penghuni hingga dashboard dan halaman laporan', async () => {
     mockApi({
-      'GET /api/auth/me': { status: 401, message: 'Silakan login terlebih dahulu' },
+      'GET /api/auth/session': { status: 401, message: 'Silakan login terlebih dahulu' },
       'POST /api/auth/login': { data: { user: RESIDENT } },
       'GET /api/reports/stats': { data: emptyStats },
       'GET /api/reports': { data: { reports: [makeReport()], pagination: { page: 1, limit: 10, total: 1, totalPages: 1 } } },
@@ -53,7 +53,7 @@ describe('App (integrasi)', () => {
 
   it('penghuni tidak dapat membuka halaman admin', async () => {
     mockApi({
-      'GET /api/auth/me': { data: { user: RESIDENT } },
+      'GET /api/auth/session': { data: { user: RESIDENT } },
       'GET /api/reports/stats': { data: emptyStats },
     });
     renderApp('/admin/reports');
@@ -62,7 +62,7 @@ describe('App (integrasi)', () => {
 
   it('admin tidak memiliki halaman buat laporan, tetapi bisa membuka kelola laporan', async () => {
     mockApi({
-      'GET /api/auth/me': { data: { user: ADMIN } },
+      'GET /api/auth/session': { data: { user: ADMIN } },
       'GET /api/reports/stats': { data: { ...emptyStats, scope: 'all' } },
       'GET /api/reports': { data: { reports: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 1 } } },
     });
@@ -73,20 +73,21 @@ describe('App (integrasi)', () => {
   });
 
   it('pengguna yang sudah login dialihkan dari halaman login', async () => {
-    mockApi({ 'GET /api/auth/me': { data: { user: RESIDENT } }, 'GET /api/reports/stats': { data: emptyStats } });
+    mockApi({ 'GET /api/auth/session': { data: { user: RESIDENT } }, 'GET /api/reports/stats': { data: emptyStats } });
     renderApp('/auth/register');
     expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
   });
 
   it('halaman 404', async () => {
-    mockApi({ 'GET /api/auth/me': { status: 401, message: 'x' } });
+    // Server lama yang masih membalas 401 tetap dianggap "belum login".
+    mockApi({ 'GET /api/auth/session': { status: 401, message: 'x' } });
     renderApp('/tidak-ada');
     expect(await screen.findByRole('heading', { name: 'Halaman tidak ditemukan' })).toBeInTheDocument();
   });
 
   it('sesi kedaluwarsa saat memuat data mengarahkan ke login dengan pesan', async () => {
     mockApi({
-      'GET /api/auth/me': { data: { user: RESIDENT } },
+      'GET /api/auth/session': { data: { user: RESIDENT } },
       'GET /api/reports/stats': { status: 401, message: 'Sesi Anda telah berakhir, silakan login kembali' },
     });
     const { store } = renderApp('/');
@@ -97,7 +98,7 @@ describe('App (integrasi)', () => {
   it('server tidak dapat dihubungi saat memeriksa sesi', async () => {
     let calls = 0;
     mockApi({
-      'GET /api/auth/me': () => {
+      'GET /api/auth/session': () => {
         calls += 1;
         return calls === 1 ? new TypeError('Failed to fetch') : { status: 401, message: 'x' };
       },
@@ -106,5 +107,25 @@ describe('App (integrasi)', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Tidak dapat terhubung ke server');
     await user.click(screen.getByRole('button', { name: 'Coba lagi' }));
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Masuk ke akun' })).toBeInTheDocument());
+  });
+
+  it('tamu dapat membuka halaman daftar yang dimuat terpisah', async () => {
+    mockApi({ 'GET /api/auth/session': { data: { user: null } } });
+    renderApp('/auth/register');
+    expect(await screen.findByRole('button', { name: 'Daftar' })).toBeInTheDocument();
+  });
+
+  it.each([
+    ['/reports/7', 'Lampu kamar mandi mati'],
+    ['/reports/new', 'Buat Laporan Kerusakan'],
+    ['/reports/7/edit', 'Ubah Laporan'],
+    ['/profile', 'Profil'],
+  ])('halaman %s dimuat secara lazy untuk penghuni', async (route, heading) => {
+    mockApi({
+      'GET /api/auth/session': { data: { user: RESIDENT } },
+      'GET /api/reports/7': { data: { report: makeReport() } },
+    });
+    renderApp(route);
+    expect(await screen.findByRole('heading', { name: heading })).toBeInTheDocument();
   });
 });

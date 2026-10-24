@@ -33,7 +33,7 @@ describe('authApi', () => {
     );
 
     expect(await authApi.me()).toEqual(user);
-    expect(api.get).toHaveBeenCalledWith('/auth/me', { skipAuthHandler: true });
+    expect(api.get).toHaveBeenCalledWith('/auth/session', { skipAuthHandler: true });
 
     await authApi.logout();
     expect(api.post).toHaveBeenLastCalledWith('/auth/logout', undefined, { skipAuthHandler: true });

@@ -39,3 +39,11 @@ export function logout(req, res) {
 export function me(req, res) {
   return success(res, 'Data pengguna aktif', { user: req.user });
 }
+
+/**
+ * Status sesi untuk front-end saat aplikasi dibuka: selalu 200 (user bernilai null bila belum login),
+ * sehingga browser tidak mencatat error 401 di console untuk pengunjung yang belum login.
+ */
+export function session(req, res) {
+  return success(res, req.user ? 'Sesi aktif' : 'Belum login', { user: req.user });
+}

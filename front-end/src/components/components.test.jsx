@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import Swal from 'sweetalert2';
@@ -216,8 +216,10 @@ describe('alerts', () => {
   });
 
   it('toastSuccess dan alertError', async () => {
-    await toastSuccess('Berhasil');
-    await alertError('Gagal total');
+    toastSuccess('Berhasil');
+    alertError('Gagal total');
+    // SweetAlert2 dimuat secara dinamis, jadi tunggu sampai kedua panggilan terjadi.
+    await waitFor(() => expect(Swal.fire).toHaveBeenCalledTimes(2));
     expect(Swal.fire).toHaveBeenNthCalledWith(1, expect.objectContaining({ toast: true, title: 'Berhasil' }));
     expect(Swal.fire).toHaveBeenNthCalledWith(2, expect.objectContaining({ icon: 'error', text: 'Gagal total' }));
   });

@@ -15,23 +15,35 @@ function readToken(req) {
   return null;
 }
 
-export function authenticate(req, res, next) {
+/** Mengembalikan { user } bila token sah, atau { error } bila tidak ada/kedaluwarsa. */
+function resolveUser(req) {
   const token = readToken(req);
-  if (!token) return next(AppError.unauthorized());
+  if (!token) return { error: AppError.unauthorized() };
 
   let payload;
   try {
     payload = verifyToken(token);
   } catch {
-    return next(AppError.unauthorized('Sesi Anda telah berakhir, silakan login kembali'));
+    return { error: AppError.unauthorized('Sesi Anda telah berakhir, silakan login kembali') };
   }
 
   // Data pengguna selalu diambil ulang dari database, sehingga perubahan role
   // atau akun yang dihapus langsung berlaku.
   const user = userService.findById(Number(payload.sub));
-  if (!user) return next(AppError.unauthorized('Sesi Anda telah berakhir, silakan login kembali'));
+  if (!user) return { error: AppError.unauthorized('Sesi Anda telah berakhir, silakan login kembali') };
+  return { user };
+}
 
+export function authenticate(req, res, next) {
+  const { user, error } = resolveUser(req);
+  if (error) return next(error);
   req.user = user;
+  return next();
+}
+
+/** Seperti authenticate, tetapi pengunjung tanpa sesi tetap diteruskan dengan req.user = null. */
+export function optionalAuthenticate(req, res, next) {
+  req.user = resolveUser(req).user ?? null;
   return next();
 }
 

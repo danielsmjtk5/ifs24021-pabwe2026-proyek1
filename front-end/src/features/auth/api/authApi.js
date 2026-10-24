@@ -13,7 +13,8 @@ const authApi = {
     await api.post('/auth/logout', undefined, { skipAuthHandler: true });
   },
   async me() {
-    const data = await api.get('/auth/me', { skipAuthHandler: true });
+    // /auth/session selalu 200 (user null bila belum login) sehingga tidak ada error 401 di console.
+    const data = await api.get('/auth/session', { skipAuthHandler: true });
     return data.user;
   },
 };

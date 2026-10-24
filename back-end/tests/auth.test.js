@@ -126,6 +126,24 @@ describe('POST /api/auth/register', () => {
 });
 
 describe('sesi', () => {
+  it('GET /api/auth/session selalu 200: user null bila belum login atau token tidak sah', async () => {
+    const guest = await request(app).get('/api/auth/session');
+    expect(guest.status).toBe(200);
+    expect(guest.body.data.user).toBeNull();
+    expect(guest.body.message).toBe('Belum login');
+
+    const invalid = await request(app).get('/api/auth/session').set('Cookie', 'asramacare_token=rusak');
+    expect(invalid.status).toBe(200);
+    expect(invalid.body.data.user).toBeNull();
+
+    const agent = await loginAs(app, BUDI);
+    const active = await agent.get('/api/auth/session');
+    expect(active.status).toBe(200);
+    expect(active.body.message).toBe('Sesi aktif');
+    expect(active.body.data.user).toMatchObject({ email: BUDI.email, role: 'penghuni' });
+    expect(active.body.data.user.password_hash).toBeUndefined();
+  });
+
   it('GET /api/auth/me tanpa login mengembalikan 401', async () => {
     const res = await request(app).get('/api/auth/me');
     expect(res.status).toBe(401);

@@ -67,12 +67,15 @@ describe('penyajian build front-end', () => {
   it('menyajikan index.html untuk route SPA dan tetap 404 JSON untuk /api', async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dist-'));
     fs.writeFileSync(path.join(dir, 'index.html'), '<div id="root"></div>');
+    fs.writeFileSync(path.join(dir, 'robots.txt'), 'User-agent: *\nAllow: /\n');
+    fs.mkdirSync(path.join(dir, 'assets'));
+    fs.writeFileSync(path.join(dir, 'assets', 'app.js'), `console.log("${'x'.repeat(4000)}");`);
     const app = createApp({ staticDir: dir });
 
     const page = await request(app).get('/reports/12');
     expect(page.status).toBe(200);
     expect(page.text).toContain('id="root"');
-    
+
     // Permintaan bersyarat (cache browser/auditor) tetap mendapat 200, bukan 304.
     for (const route of ['/', '/auth/login']) {
       const again = await request(app)
@@ -83,6 +86,15 @@ describe('penyajian build front-end', () => {
       expect(again.headers['cache-control']).toBe('no-store');
       expect(again.headers.etag).toBeUndefined();
     }
+
+    // robots.txt dari build dikirim apa adanya (bukan index.html), aset dikompresi dan di-cache lama.
+    const robots = await request(app).get('/robots.txt');
+    expect(robots.status).toBe(200);
+    expect(robots.text).toContain('User-agent: *');
+    const asset = await request(app).get('/assets/app.js').set('Accept-Encoding', 'gzip');
+    expect(asset.status).toBe(200);
+    expect(asset.headers['content-encoding']).toBe('gzip');
+    expect(asset.headers['cache-control']).toBe('public, max-age=31536000, immutable');
 
     const api = await request(app).get('/api/tidak-ada');
     expect(api.status).toBe(404);
