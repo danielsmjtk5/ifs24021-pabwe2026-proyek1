@@ -11,12 +11,12 @@ const points = [
 function AuthLayout() {
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      <section className="relative hidden overflow-hidden bg-gradient-to-br from-navy-950 via-navy-900 to-blue-700 p-12 text-white lg:flex lg:flex-col lg:justify-between">
+      <aside aria-label="Informasi Layanan AsramaCare" className="relative hidden overflow-hidden bg-gradient-to-br from-navy-950 via-navy-900 to-blue-700 p-12 text-white lg:flex lg:flex-col lg:justify-between">
         <Brand light />
         <div>
-          <h1 className="max-w-md text-4xl font-extrabold leading-tight">
+          <p className="max-w-md text-4xl font-extrabold leading-tight">
             Asrama nyaman dimulai dari laporan yang tertangani.
-          </h1>
+          </p>
           <ul className="mt-8 space-y-3">
             {points.map((p) => (
               <li key={p} className="flex items-center gap-3 text-blue-100">
@@ -28,15 +28,15 @@ function AuthLayout() {
         </div>
         <p className="text-sm text-blue-200/80">Proyek 1 PABWE · Institut Teknologi Del</p>
         <div className="pointer-events-none absolute -right-24 -bottom-24 h-80 w-80 rounded-full bg-blue-500/20 blur-3xl" />
-      </section>
-      <section className="flex items-center justify-center px-4 py-10 sm:px-8">
+      </aside>
+      <main id="main-content" className="flex items-center justify-center px-4 py-10 sm:px-8">
         <div className="w-full max-w-md">
           <div className="mb-8 lg:hidden">
             <Brand />
           </div>
           <Outlet />
         </div>
-      </section>
+      </main>
     </div>
   );
 }

@@ -109,11 +109,11 @@ function ProfilePage() {
             {initials(user.name)}
           </span>
           <p className="mt-4 text-lg font-bold text-slate-900">{user.name}</p>
-          <p className="text-sm text-slate-500">{user.email}</p>
+          <p className="text-sm text-slate-600">{user.email}</p>
           <span className="mt-3 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold capitalize text-blue-700">
             {user.role}
           </span>
-          <p className="mt-4 text-xs text-slate-400">Terdaftar sejak {formatDate(user.created_at)}</p>
+          <p className="mt-4 text-xs font-medium text-slate-600">Terdaftar sejak {formatDate(user.created_at)}</p>
         </div>
         <div className="space-y-6 lg:col-span-2">
           <ProfileForm user={user} />

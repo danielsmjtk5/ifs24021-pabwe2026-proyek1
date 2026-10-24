@@ -11,7 +11,7 @@ function Navbar({ user, onMenu, onLogout }) {
         <IconMenu2 className="h-6 w-6" aria-hidden="true" />
       </button>
       <div className="hidden lg:block">
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-slate-600">
           Selamat datang, <span className="font-semibold text-slate-800">{user.name}</span>
         </p>
       </div>
@@ -22,7 +22,7 @@ function Navbar({ user, onMenu, onLogout }) {
           </span>
           <span className="hidden text-left sm:block">
             <span className="block text-sm font-semibold text-slate-800">{user.name}</span>
-            <span className="block text-xs capitalize text-slate-500">{user.role}</span>
+            <span className="block text-xs capitalize text-slate-600">{user.role}</span>
           </span>
         </Link>
         <button type="button" className="btn-secondary px-3" onClick={onLogout}>

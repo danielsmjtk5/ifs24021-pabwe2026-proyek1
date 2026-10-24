@@ -39,8 +39,8 @@ function LoginPage() {
 
   return (
     <div>
-      <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">Masuk ke akun</h2>
-      <p className="mt-2 text-sm text-slate-500">Gunakan email dan password yang terdaftar di asrama.</p>
+      <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Masuk ke akun</h1>
+      <p className="mt-2 text-sm text-slate-600">Gunakan email dan password yang terdaftar di asrama.</p>
 
       {sessionExpired && (
         <output className="mt-6 block rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
@@ -84,7 +84,7 @@ function LoginPage() {
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-500">
+      <p className="mt-6 text-center text-sm text-slate-600">
         Penghuni baru?{' '}
         <Link to="/auth/register" className="font-semibold text-blue-700 hover:underline">
           Daftar akun penghuni

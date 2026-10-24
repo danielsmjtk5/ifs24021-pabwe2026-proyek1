@@ -41,8 +41,8 @@ function RegisterPage() {
 
   return (
     <div>
-      <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">Daftar akun penghuni</h2>
-      <p className="mt-2 text-sm text-slate-500">Akun baru otomatis berperan sebagai penghuni asrama.</p>
+      <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Daftar akun penghuni</h1>
+      <p className="mt-2 text-sm text-slate-600">Akun baru otomatis berperan sebagai penghuni asrama.</p>
 
       {serverError && (
         <div className="mt-6 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700" role="alert">
@@ -80,7 +80,7 @@ function RegisterPage() {
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-500">
+      <p className="mt-6 text-center text-sm text-slate-600">
         Sudah punya akun?{' '}
         <Link to="/auth/login" className="font-semibold text-blue-700 hover:underline">
           Masuk

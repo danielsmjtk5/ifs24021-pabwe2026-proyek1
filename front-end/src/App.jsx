@@ -4,14 +4,14 @@ import { Route, Routes } from 'react-router-dom';
 import NotFoundPage from './components/NotFoundPage';
 import { GuestOnly, RequireAuth, RequireRole } from './components/RouteGuards';
 import { ErrorState, LoadingState } from './components/States';
-import DashboardLayout from './layouts/DashboardLayout';
 import AuthLayout from './features/auth/layouts/AuthLayout';
-import LoginPage from './features/auth/pages/LoginPage';
 import { fetchCurrentUser, sessionExpired } from './features/auth/states/authSlice';
 import { setUnauthorizedHandler } from './helpers/apiHelper';
 
-// Halaman selain login dimuat terpisah (code splitting) agar JavaScript awal lebih kecil.
+// Halaman dan layout dimuat terpisah (code splitting) agar JavaScript awal lebih kecil.
+const LoginPage = lazy(() => import('./features/auth/pages/LoginPage'));
 const RegisterPage = lazy(() => import('./features/auth/pages/RegisterPage'));
+const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
 const DashboardPage = lazy(() => import('./features/dashboard/pages/DashboardPage'));
 const ReportCreatePage = lazy(() => import('./features/reports/pages/ReportCreatePage'));
 const ReportDetailPage = lazy(() => import('./features/reports/pages/ReportDetailPage'));
@@ -32,26 +32,26 @@ function App() {
 
   if (sessionStatus !== 'ready') {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <main id="main-content" className="flex min-h-screen items-center justify-center">
         <LoadingState message="Menyiapkan AsramaCare..." />
-      </div>
+      </main>
     );
   }
 
   if (sessionError) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <main id="main-content" className="flex min-h-screen items-center justify-center">
         <ErrorState message={sessionError} onRetry={() => dispatch(fetchCurrentUser())} />
-      </div>
+      </main>
     );
   }
 
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center">
+        <main id="main-content" className="flex min-h-screen items-center justify-center">
           <LoadingState message="Memuat halaman..." />
-        </div>
+        </main>
       }
     >
       <Routes>

@@ -43,7 +43,7 @@ function StatusSummary({ byStatus, total }) {
             </span>
             <span className="font-semibold text-slate-900">
               {byStatus[value]}
-              <span className="ml-1 font-normal text-slate-400">
+              <span className="ml-1 font-medium text-slate-600">
                 ({total ? Math.round((byStatus[value] / total) * 100) : 0}%)
               </span>
             </span>
@@ -59,7 +59,7 @@ function CategorySummary({ byCategory }) {
     <div className="card p-5">
       <h2 className="text-base font-bold text-slate-900">Kategori terbanyak</h2>
       {byCategory.length === 0 ? (
-        <p className="mt-4 text-sm text-slate-500">Belum ada data kategori.</p>
+        <p className="mt-4 text-sm text-slate-600">Belum ada data kategori.</p>
       ) : (
         <ul className="mt-4 space-y-2.5">
           {byCategory.map((c) => (

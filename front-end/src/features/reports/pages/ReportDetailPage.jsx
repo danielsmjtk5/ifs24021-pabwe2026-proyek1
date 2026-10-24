@@ -26,9 +26,9 @@ import PropTypes from 'prop-types';
 function InfoRow({ icon: Icon, label, children }) {
   return (
     <div className="flex items-start gap-3">
-      <Icon className="mt-0.5 h-5 w-5 shrink-0 text-slate-400" aria-hidden="true" />
+      <Icon className="mt-0.5 h-5 w-5 shrink-0 text-slate-500" aria-hidden="true" />
       <div>
-        <p className="text-xs font-medium text-slate-500">{label}</p>
+        <p className="text-xs font-medium text-slate-600">{label}</p>
         <div className="text-sm font-semibold text-slate-800">{children}</div>
       </div>
     </div>
@@ -93,7 +93,7 @@ function ReportDetailPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         <article className="card p-6 lg:col-span-2">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-semibold text-slate-400">Laporan #{report.id}</span>
+            <span className="text-sm font-semibold text-slate-600">Laporan #{report.id}</span>
             <StatusBadge status={report.status} />
             <PriorityBadge priority={report.priority} />
           </div>
@@ -136,7 +136,7 @@ function ReportDetailPage() {
             </div>
           )}
           {!permissions.canEdit && report.reporter.id === user.id && (
-            <p className="mt-6 rounded-xl bg-slate-50 px-4 py-3 text-xs text-slate-500">
+            <p className="mt-6 rounded-xl bg-slate-50 px-4 py-3 text-xs text-slate-600">
               Laporan yang sudah ditangani admin tidak dapat diubah atau dihapus.
             </p>
           )}
@@ -152,7 +152,7 @@ function ReportDetailPage() {
               {report.reporter.email && (
                 <InfoRow icon={IconUser} label="Kontak">
                   {report.reporter.email}
-                  {report.reporter.room && <span className="block font-normal text-slate-500">Kamar {report.reporter.room}</span>}
+                  {report.reporter.room && <span className="block font-normal text-slate-600">Kamar {report.reporter.room}</span>}
                 </InfoRow>
               )}
             </div>

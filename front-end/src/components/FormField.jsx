@@ -19,7 +19,7 @@ function FormField({ id, label, error, hint, as = 'input', children, ...props })
       {error ? (
         <p className="field-error">{error}</p>
       ) : (
-        hint && <p className="mt-1.5 text-xs text-slate-500">{hint}</p>
+        hint && <p className="mt-1.5 text-xs text-slate-600">{hint}</p>
       )}
     </div>
   );

@@ -6,6 +6,28 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   return {
     plugins: [react(), tailwindcss()],
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+                return 'vendor-react';
+              }
+              if (id.includes('@reduxjs') || id.includes('react-redux')) {
+                return 'vendor-redux';
+              }
+              if (id.includes('@tabler/icons-react')) {
+                return 'vendor-icons';
+              }
+              if (id.includes('sweetalert2')) {
+                return 'vendor-swal';
+              }
+            }
+          },
+        },
+      },
+    },
     server: {
       port: 5173,
       proxy: {

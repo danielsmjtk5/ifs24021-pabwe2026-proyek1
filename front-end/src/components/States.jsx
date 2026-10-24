@@ -16,8 +16,8 @@ export function EmptyState({ title, description, action }) {
       <div className="rounded-2xl bg-blue-50 p-4 text-blue-600">
         <IconInbox className="h-8 w-8" aria-hidden="true" />
       </div>
-      <h3 className="text-base font-bold text-slate-800">{title}</h3>
-      {description && <p className="max-w-sm text-sm text-slate-500">{description}</p>}
+      <h2 className="text-base font-bold text-slate-800">{title}</h2>
+      {description && <p className="max-w-sm text-sm text-slate-600">{description}</p>}
       {action}
     </div>
   );
@@ -29,8 +29,8 @@ export function ErrorState({ message, onRetry }) {
       <div className="rounded-2xl bg-rose-50 p-4 text-rose-600">
         <IconAlertTriangle className="h-8 w-8" aria-hidden="true" />
       </div>
-      <h3 className="text-base font-bold text-slate-800">Terjadi kesalahan</h3>
-      <p className="max-w-sm text-sm text-slate-500">{message}</p>
+      <h2 className="text-base font-bold text-slate-800">Terjadi kesalahan</h2>
+      <p className="max-w-sm text-sm text-slate-600">{message}</p>
       {onRetry && (
         <button type="button" className="btn-secondary" onClick={onRetry}>
           Coba lagi

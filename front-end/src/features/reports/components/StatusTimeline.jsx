@@ -20,10 +20,10 @@ function StatusTimeline({ history }) {
               ) : (
                 <StatusBadge status={item.new_status} />
               )}
-              <span className="text-xs text-slate-500">{formatDate(item.created_at, true)}</span>
+              <span className="text-xs text-slate-600">{formatDate(item.created_at, true)}</span>
             </div>
             {item.note && <p className="mt-1.5 text-sm text-slate-700">{item.note}</p>}
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-slate-600">
               oleh {item.changed_by_name || 'Pengguna terhapus'}
               {item.changed_by_role === 'admin' && ' (Admin)'}
             </p>

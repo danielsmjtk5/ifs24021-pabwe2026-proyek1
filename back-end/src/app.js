@@ -20,10 +20,10 @@ export function createApp({ staticDir = env.staticDir } = {}) {
     helmet({
       contentSecurityPolicy: {
         directives: {
-          // Font di-host sendiri; 'unsafe-inline' untuk style bawaan SweetAlert2.
-          'style-src': ["'self'", "'unsafe-inline'"],
-          // Vite menyisipkan subset font kecil sebagai data: URI.
-          'font-src': ["'self'", 'data:'],
+          // Font di-host sendiri; fallback Google Fonts; 'unsafe-inline' untuk SweetAlert2.
+          'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+          // Vite menyisipkan subset font kecil sebagai data: URI; fallback fonts.gstatic.com.
+          'font-src': ["'self'", 'data:', 'https://fonts.gstatic.com'],
           // Hugging Face Spaces menampilkan aplikasi di dalam iframe huggingface.co.
           'frame-ancestors': ["'self'", ...env.frameAncestors],
         },
@@ -32,11 +32,16 @@ export function createApp({ staticDir = env.staticDir } = {}) {
       xFrameOptions: env.frameAncestors.length > 0 ? false : { action: 'sameorigin' },
     }),
   );
-  // Kompresi gzip untuk respon teks (JS, CSS, HTML, JSON) agar halaman lebih cepat dimuat.
-  app.use(compression());
+  // Kompresi gzip untuk semua respon teks (JS, CSS, HTML, JSON) tanpa batas minimum ukuran.
+  app.use(compression({ threshold: 0 }));
   app.use(cors({ origin: env.corsOrigins, credentials: true }));
   app.use(express.json({ limit: '100kb' }));
   app.use(cookieParser());
+
+  // Pastikan crawler dan auditor Lighthouse selalu menerima file robots.txt valid (text/plain)
+  app.get('/robots.txt', (_req, res) => {
+    res.type('text/plain').set('Cache-Control', 'public, max-age=86400').send('User-agent: *\nAllow: /\n');
+  });
 
   app.use('/api', routes);
   app.use('/api', notFoundHandler);
