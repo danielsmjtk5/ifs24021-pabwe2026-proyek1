@@ -244,7 +244,7 @@ curl -b cookie.txt "http://localhost:3000/api/reports?status=menunggu&sort=prior
 ```bash
 # back-end
 cd back-end
-npm test                 # 75 test endpoint & database
+npm test                 # 82 test endpoint & database
 npm run test:coverage    # laporan coverage di back-end/coverage/
 
 # front-end
@@ -260,7 +260,7 @@ Hasil terakhir (dijalankan saat pengembangan):
 
 | Bagian | Test | Statements | Branches | Functions | Lines |
 | --- | --- | --- | --- | --- | --- |
-| Back-end | 75 lulus | 99,55% | 98,47% | 100% | 100% |
+| Back-end | 82 lulus | 100% | 100% | 100% | 100% |
 | Front-end | 133 lulus | 100% | 100% | 100% | 100% |
 
 ## Build dan deployment

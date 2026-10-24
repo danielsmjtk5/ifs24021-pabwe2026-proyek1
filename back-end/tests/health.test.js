@@ -1,6 +1,7 @@
 import request from 'supertest';
 import { describe, expect, it, vi } from 'vitest';
 import { getDb } from '../src/config/database.js';
+import { errorHandler } from '../src/middlewares/errorHandler.js';
 import { makeApp } from './helpers.js';
 
 describe('GET /api/health', () => {
@@ -57,5 +58,25 @@ describe('penanganan umum', () => {
     expect(res.headers['access-control-allow-credentials']).toBe('true');
     const evil = await request(makeApp()).get('/api/health').set('Origin', 'http://jahat.example');
     expect(evil.headers['access-control-allow-origin']).toBeUndefined();
+  });
+});
+
+describe('errorHandler di luar mode test', () => {
+  it('mencatat error tak terduga ke console dan tetap mengirim pesan umum', () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const res = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+    const error = new Error('detail internal');
+
+    errorHandler(error, {}, res, () => {});
+
+    expect(log).toHaveBeenCalledWith(error);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: 'Terjadi kesalahan pada server, silakan coba lagi',
+    });
+    log.mockRestore();
+    vi.unstubAllEnvs();
   });
 });

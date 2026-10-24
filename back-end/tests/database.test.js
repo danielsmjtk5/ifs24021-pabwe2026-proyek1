@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { getDb, openDatabase, runMigrations } from '../src/config/database.js';
+import { closeDb, getDb, openDatabase, runMigrations } from '../src/config/database.js';
 import { seed } from '../database/seeds/seed.js';
 import { ADMIN } from './helpers.js';
 import AppError from '../src/utils/AppError.js';
@@ -44,5 +44,12 @@ describe('migrasi dan seed', () => {
 
   it('changePassword untuk pengguna yang tidak ada melempar 404', () => {
     expect(() => changePassword(999, { currentPassword: 'a', newPassword: 'b' })).toThrow(AppError);
+  });
+});
+
+describe('koneksi database', () => {
+  it('closeDb aman dipanggil saat koneksi sudah tertutup', () => {
+    closeDb();
+    expect(() => closeDb()).not.toThrow();
   });
 });

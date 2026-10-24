@@ -69,6 +69,19 @@ describe('POST /api/auth/register', () => {
     expect(res.headers['set-cookie'][0]).toMatch(/asramacare_token=/);
   });
 
+  it('email dengan format salah ditolak', async () => {
+    const res = await request(app).post('/api/auth/register').send({ ...newUser, email: 'rina@test' });
+    expect(res.status).toBe(400);
+    expect(res.body.errors.email).toBe('Format email tidak valid');
+  });
+
+  it('email berformat benar tetapi lebih dari 120 karakter ditolak', async () => {
+    const email = `${'a'.repeat(115)}@test.local`;
+    const res = await request(app).post('/api/auth/register').send({ ...newUser, email });
+    expect(res.status).toBe(400);
+    expect(res.body.errors.email).toBe('Format email tidak valid');
+  });
+
   it('email yang sudah ada mengembalikan 409', async () => {
     const res = await request(app).post('/api/auth/register').send({ ...newUser, email: BUDI.email });
     expect(res.status).toBe(409);
@@ -91,6 +104,7 @@ describe('POST /api/auth/register', () => {
       [{ password: 'hurufsaja' }, 'Password harus mengandung huruf dan angka'],
       [{ password: `a1${'x'.repeat(80)}` }, 'Password maksimal 72 karakter'],
       [{ password: '' }, 'Password wajib diisi'],
+      [{ password: 12345678 }, 'Password wajib diisi'],
     ];
     for (const [patch, message] of cases) {
       const r = await request(app).post('/api/auth/register').send({ ...newUser, ...patch });
