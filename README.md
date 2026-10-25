@@ -1,4 +1,4 @@
-
+# AsramaCare — Front-end
 
 AsramaCare adalah aplikasi web pelaporan kerusakan fasilitas asrama. Penghuni membuat laporan
 kerusakan, lalu admin asrama memproses, memberi catatan, dan menyelesaikan atau menolak laporan
@@ -10,10 +10,10 @@ Institut Teknologi Del, Tahun Ajaran 2026/2027.
 
 | | |
 | --- | --- |
-| Disusun oleh | `[NIM]` – `[NAMA]` |
+| Disusun oleh | `[11S24021]` – `[DANIEL SIMANJUNTAK]` |
 | Aplikasi (Delcom) | https://ifs24021-pabwe2026-proyek1.s1if.cloud |
-| REST API (Vercel) | `https://<domain-vercel>/api` |
-| Video demo | `[link YouTube]` |
+| REST API (Vercel) | `https://https://ifs24021-pabwe2026-proyek1-backend.vercel.app//api` |
+
 
 ## Masalah yang diselesaikan
 
