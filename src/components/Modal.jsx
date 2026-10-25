@@ -1,75 +1,22 @@
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId } from 'react';
 import { IconX } from '@tabler/icons-react';
 import PropTypes from 'prop-types';
 
-const FOCUSABLE = [
-  'a[href]',
-  'button:not([disabled])',
-  'input:not([disabled])',
-  'select:not([disabled])',
-  'textarea:not([disabled])',
-  '[tabindex]:not([tabindex="-1"])',
-].join(',');
-
-/**
- * Dialog yang dapat diakses keyboard:
- * - fokus pindah ke elemen pertama di dalam modal saat dibuka,
- * - Tab/Shift+Tab berputar di dalam modal (focus trap),
- * - Escape menutup modal,
- * - fokus kembali ke elemen pemicu (mis. tombol "Ubah status") saat modal ditutup.
- */
 function Modal({ title, description, onClose, children }) {
   // id unik agar aria-labelledby tidak bentrok bila ada lebih dari satu modal.
   const titleId = useId();
   const descriptionId = useId();
-  const dialogRef = useRef(null);
-  const onCloseRef = useRef(onClose);
-
   useEffect(() => {
-    onCloseRef.current = onClose;
+    const onKey = (event) => {
+      if (event.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    const trigger = document.activeElement;
-    const focusables = () => [...dialog.querySelectorAll(FOCUSABLE)];
-
-    // Tombol "Tutup" selalu ada, jadi selalu ada elemen yang bisa menerima fokus.
-    focusables()[0].focus();
-
-    const onKeyDown = (event) => {
-      if (event.key === 'Escape') {
-        onCloseRef.current();
-        return;
-      }
-      if (event.key !== 'Tab') return;
-      const items = focusables();
-      const start = items[0];
-      const end = items.at(-1);
-      if (event.shiftKey && document.activeElement === start) {
-        event.preventDefault();
-        end.focus();
-      } else if (!event.shiftKey && document.activeElement === end) {
-        event.preventDefault();
-        start.focus();
-      }
-    };
-
-    // Halaman di belakang modal tidak ikut tergulir selama modal terbuka.
-    const { overflow } = document.body.style;
-    document.body.style.overflow = 'hidden';
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-      document.body.style.overflow = overflow;
-      if (trigger instanceof HTMLElement && trigger.isConnected) trigger.focus();
-    };
-  }, []);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 p-4 sm:items-center">
       <dialog
-        ref={dialogRef}
         open
         aria-modal="true"
         aria-labelledby={titleId}
