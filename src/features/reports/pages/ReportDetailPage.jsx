@@ -17,6 +17,7 @@ import { PriorityBadge, StatusBadge } from '../../../components/Badges';
 import { ErrorState, LoadingState } from '../../../components/States';
 import { alertError, confirmDanger, toastSuccess } from '../../../components/alerts';
 import { categoryLabel, formatDate } from '../../../helpers/toolsHelper';
+import useThunk from '../../../hooks/useThunk';
 import StatusTimeline from '../components/StatusTimeline';
 import NoteModal from '../modals/NoteModal';
 import StatusChangeModal from '../modals/StatusChangeModal';
@@ -38,6 +39,7 @@ function InfoRow({ icon: Icon, label, children }) {
 function ReportDetailPage() {
   const { id } = useParams();
   const dispatch = useAppDispatch();
+  const run = useThunk();
   const navigate = useNavigate();
   const user = useSelector((state) => state.auth.user);
   const { item: report, status, error } = useSelector((state) => state.reports.detail);
@@ -72,23 +74,21 @@ function ReportDetailPage() {
       text: `"${report.title}" beserta riwayatnya akan dihapus permanen.`,
     });
     if (!ok) return;
-    const result = await dispatch(deleteReport(report.id));
-    if (deleteReport.fulfilled.match(result)) {
+    const outcome = await run(deleteReport(report.id));
+    if (outcome.ok) {
       toastSuccess('Laporan berhasil dihapus');
       navigate(user.role === 'admin' ? '/admin/reports' : '/my-reports', { replace: true });
     } else {
-      alertError(result.payload.message);
+      alertError(outcome.error.message);
     }
   };
 
+  // Dipakai modal: hasil dikembalikan ke useFormSubmit di dalam modal.
   const submitWith = (thunk, message) => async (values) => {
-    const result = await dispatch(thunk({ id: report.id, ...values }));
-    if (thunk.fulfilled.match(result)) {
-      toastSuccess(message);
-      return true;
-    }
-    alertError(result.payload.message);
-    return false;
+    const outcome = await run(thunk({ id: report.id, ...values }));
+    if (outcome.ok) toastSuccess(message);
+    else alertError(outcome.error.message);
+    return outcome;
   };
 
   return (

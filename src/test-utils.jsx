@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
@@ -48,6 +48,23 @@ export function makeReport(overrides = {}) {
     ],
     ...overrides,
   };
+}
+
+/** Mengisi formulir laporan (dipakai test ReportForm dan ReportCreatePage). */
+export async function fillReportForm(user, values = {}) {
+  const v = {
+    title: 'Kloset tersumbat',
+    category: 'air_sanitasi',
+    priority: 'tinggi',
+    location: 'Gedung A Lantai 1',
+    description: 'Kloset tersumbat dan air meluap.',
+    ...values,
+  };
+  await user.type(screen.getByLabelText('Judul laporan'), v.title);
+  await user.selectOptions(screen.getByLabelText('Kategori kerusakan'), v.category);
+  await user.selectOptions(screen.getByLabelText('Tingkat prioritas'), v.priority);
+  await user.type(screen.getByLabelText('Lokasi fasilitas'), v.location);
+  await user.type(screen.getByLabelText('Deskripsi kerusakan'), v.description);
 }
 
 /** Menampilkan path aktif agar navigasi dapat diperiksa dalam test. */

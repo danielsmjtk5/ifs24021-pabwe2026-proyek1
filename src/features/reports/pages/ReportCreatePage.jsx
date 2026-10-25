@@ -1,25 +1,17 @@
-import { useState } from 'react';
-import { useAppDispatch } from '../../../app/hooks';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../../../components/PageHeader';
-import { alertError, toastSuccess } from '../../../components/alerts';
+import { toastSuccess } from '../../../components/alerts';
+import useThunk from '../../../hooks/useThunk';
 import ReportForm from '../components/ReportForm';
 import { createReport } from '../states/reportsSlice';
 
 function ReportCreatePage() {
-  const dispatch = useAppDispatch();
+  const run = useThunk();
   const navigate = useNavigate();
-  const [serverErrors, setServerErrors] = useState({});
 
-  const onSubmit = async (values) => {
-    const result = await dispatch(createReport(values));
-    if (createReport.fulfilled.match(result)) {
-      toastSuccess('Laporan berhasil dibuat');
-      navigate(`/reports/${result.payload.id}`);
-    } else {
-      setServerErrors(result.payload.errors || {});
-      alertError(result.payload.message);
-    }
+  const onSuccess = (report) => {
+    toastSuccess('Laporan berhasil dibuat');
+    navigate(`/reports/${report.id}`);
   };
 
   return (
@@ -28,7 +20,12 @@ function ReportCreatePage() {
         title="Buat Laporan Kerusakan"
         description="Isi detail kerusakan selengkap mungkin agar pengelola dapat menindaklanjuti dengan cepat."
       />
-      <ReportForm submitLabel="Kirim laporan" onSubmit={onSubmit} onCancel={() => navigate(-1)} serverErrors={serverErrors} />
+      <ReportForm
+        submitLabel="Kirim laporan"
+        onSubmit={(values) => run(createReport(values))}
+        onSuccess={onSuccess}
+        onCancel={() => navigate(-1)}
+      />
     </div>
   );
 }

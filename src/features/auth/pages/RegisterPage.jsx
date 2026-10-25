@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { useAppDispatch } from '../../../app/hooks';
 import { Link, useNavigate } from 'react-router-dom';
 import { IconAlertCircle, IconUserPlus } from '@tabler/icons-react';
 import FormField from '../../../components/FormField';
+import useFormSubmit from '../../../hooks/useFormSubmit';
 import useInput from '../../../hooks/useInput';
+import useThunk from '../../../hooks/useThunk';
 import { validateRegister } from '../../../helpers/toolsHelper';
 import { registerUser } from '../states/authSlice';
 
@@ -13,31 +13,16 @@ function RegisterPage() {
   const [room, onRoomChange] = useInput('');
   const [password, onPasswordChange] = useInput('');
   const [confirmPassword, onConfirmChange] = useInput('');
-  const [errors, setErrors] = useState({});
-  const [serverError, setServerError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const dispatch = useAppDispatch();
+  const run = useThunk();
   const navigate = useNavigate();
 
-  const onSubmit = async (event) => {
-    event.preventDefault();
-    setServerError('');
-    const found = validateRegister({ name, email, room, password, confirmPassword });
-    setErrors(found);
-    if (Object.keys(found).length) return;
-
-    setSubmitting(true);
-    const result = await dispatch(
-      registerUser({ name: name.trim(), email: email.trim(), room: room.trim(), password }),
-    );
-    setSubmitting(false);
-    if (registerUser.fulfilled.match(result)) {
-      navigate('/', { replace: true });
-    } else {
-      setServerError(result.payload.message);
-      setErrors(result.payload.errors || {});
-    }
-  };
+  const { errors, serverError, submitting, handleSubmit } = useFormSubmit({
+    getValues: () => ({ name, email, room, password, confirmPassword }),
+    validate: validateRegister,
+    submit: (values) =>
+      run(registerUser({ name: values.name.trim(), email: values.email.trim(), room: values.room.trim(), password: values.password })),
+    onSuccess: () => navigate('/', { replace: true }),
+  });
 
   return (
     <div>
@@ -51,7 +36,7 @@ function RegisterPage() {
         </div>
       )}
 
-      <form className="mt-6 space-y-4" onSubmit={onSubmit} noValidate>
+      <form className="mt-6 space-y-4" onSubmit={handleSubmit} noValidate>
         <FormField id="name" label="Nama lengkap" value={name} onChange={onNameChange} error={errors.name} autoComplete="name" />
         <FormField id="email" label="Email" type="email" value={email} onChange={onEmailChange} error={errors.email} autoComplete="email" />
         <FormField id="room" label="Kamar (opsional)" placeholder="Contoh: A-101" value={room} onChange={onRoomChange} error={errors.room} />

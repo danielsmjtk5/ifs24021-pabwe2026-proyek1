@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes, useLocation } from 'react-router-dom';
+import ErrorBoundary from './components/ErrorBoundary';
 import NotFoundPage from './components/NotFoundPage';
 import { GuestOnly, RequireAuth, RequireRole } from './components/RouteGuards';
 import { ErrorState, LoadingState } from './components/States';
@@ -19,7 +20,7 @@ const ReportEditPage = lazy(() => import('./features/reports/pages/ReportEditPag
 const ReportListPage = lazy(() => import('./features/reports/pages/ReportListPage'));
 const ProfilePage = lazy(() => import('./features/users/pages/ProfilePage'));
 
-function App() {
+function AppRoutes() {
   const dispatch = useDispatch();
   const { sessionStatus, sessionError } = useSelector((state) => state.auth);
 
@@ -85,6 +86,16 @@ function App() {
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Suspense>
+  );
+}
+
+/** Error Boundary global; error dibersihkan otomatis saat pengguna berpindah halaman. */
+function App() {
+  const location = useLocation();
+  return (
+    <ErrorBoundary resetKey={location.pathname}>
+      <AppRoutes />
+    </ErrorBoundary>
   );
 }
 

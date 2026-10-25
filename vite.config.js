@@ -28,7 +28,7 @@ export default defineConfig(({ mode }) => {
       coverage: {
         provider: 'v8',
         include: ['src/**/*.{js,jsx}'],
-        exclude: ['src/main.jsx', 'src/setupTests.js', 'src/test-utils.jsx', 'src/**/*.test.{js,jsx}'],
+        exclude: ['src/main.jsx', 'src/**/*.test.{js,jsx}'],
         reporter: ['text', 'html', 'lcov'],
       },
     },

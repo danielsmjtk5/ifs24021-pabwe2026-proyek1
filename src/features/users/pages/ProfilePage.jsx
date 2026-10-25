@@ -1,51 +1,39 @@
-import { useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useAppDispatch } from '../../../app/hooks';
 import { IconKey, IconUserCircle } from '@tabler/icons-react';
 import FormField from '../../../components/FormField';
 import PageHeader from '../../../components/PageHeader';
 import { alertError, toastSuccess } from '../../../components/alerts';
+import useFormSubmit from '../../../hooks/useFormSubmit';
 import useInput from '../../../hooks/useInput';
+import useThunk from '../../../hooks/useThunk';
 import { formatDate, initials, validatePasswordChange, validateProfile } from '../../../helpers/toolsHelper';
 import { changePassword, updateProfile } from '../states/usersSlice';
 import { userShape } from '../../../helpers/propShapes';
 
 function ProfileForm({ user }) {
-  const dispatch = useAppDispatch();
+  const run = useThunk();
   const [name, onNameChange] = useInput(user.name);
   const [room, onRoomChange] = useInput(user.room || '');
-  const [errors, setErrors] = useState({});
-  const [saving, setSaving] = useState(false);
-
-  const onSubmit = async (event) => {
-    event.preventDefault();
-    const values = { name: name.trim(), room: room.trim() };
-    const found = validateProfile(values);
-    setErrors(found);
-    if (Object.keys(found).length) return;
-    setSaving(true);
-    const result = await dispatch(updateProfile(values));
-    setSaving(false);
-    if (updateProfile.fulfilled.match(result)) {
-      toastSuccess('Profil berhasil diperbarui');
-    } else {
-      setErrors(result.payload.errors || {});
-      alertError(result.payload.message);
-    }
-  };
+  const { errors, submitting, handleSubmit } = useFormSubmit({
+    getValues: () => ({ name: name.trim(), room: room.trim() }),
+    validate: validateProfile,
+    submit: (values) => run(updateProfile(values)),
+    onSuccess: () => toastSuccess('Profil berhasil diperbarui'),
+    onError: (error) => alertError(error.message),
+  });
 
   return (
-    <form className="card space-y-5 p-6" onSubmit={onSubmit} noValidate aria-label="Form profil">
+    <form className="card space-y-5 p-6" onSubmit={handleSubmit} noValidate aria-label="Form profil">
       <h2 className="flex items-center gap-2 text-base font-bold text-slate-900">
         <IconUserCircle className="h-5 w-5 text-blue-700" aria-hidden="true" />
         Informasi profil
       </h2>
-      <FormField id="profile-name" label="Nama lengkap" value={name} onChange={onNameChange} error={errors.name} />
-      <FormField id="profile-email" label="Email" value={user.email} disabled hint="Email tidak dapat diubah." />
-      <FormField id="profile-room" label="Kamar" value={room} onChange={onRoomChange} error={errors.room} placeholder="Contoh: A-101" />
+      <FormField label="Nama lengkap" value={name} onChange={onNameChange} error={errors.name} />
+      <FormField label="Email" value={user.email} disabled hint="Email tidak dapat diubah." />
+      <FormField label="Kamar" value={room} onChange={onRoomChange} error={errors.room} placeholder="Contoh: A-101" />
       <div className="flex justify-end">
-        <button type="submit" className="btn-primary" disabled={saving}>
-          {saving ? 'Menyimpan...' : 'Simpan profil'}
+        <button type="submit" className="btn-primary" disabled={submitting}>
+          {submitting ? 'Menyimpan...' : 'Simpan profil'}
         </button>
       </div>
     </form>
@@ -53,44 +41,35 @@ function ProfileForm({ user }) {
 }
 
 function PasswordForm() {
-  const dispatch = useAppDispatch();
+  const run = useThunk();
   const [currentPassword, onCurrentChange, setCurrent] = useInput('');
   const [newPassword, onNewChange, setNew] = useInput('');
   const [confirmPassword, onConfirmChange, setConfirm] = useInput('');
-  const [errors, setErrors] = useState({});
-  const [saving, setSaving] = useState(false);
-
-  const onSubmit = async (event) => {
-    event.preventDefault();
-    const found = validatePasswordChange({ currentPassword, newPassword, confirmPassword });
-    setErrors(found);
-    if (Object.keys(found).length) return;
-    setSaving(true);
-    const result = await dispatch(changePassword({ currentPassword, newPassword }));
-    setSaving(false);
-    if (changePassword.fulfilled.match(result)) {
+  const { errors, submitting, handleSubmit } = useFormSubmit({
+    getValues: () => ({ currentPassword, newPassword, confirmPassword }),
+    validate: validatePasswordChange,
+    submit: (values) => run(changePassword({ currentPassword: values.currentPassword, newPassword: values.newPassword })),
+    onSuccess: () => {
       setCurrent('');
       setNew('');
       setConfirm('');
       toastSuccess('Password berhasil diganti');
-    } else {
-      setErrors(result.payload.errors || {});
-      alertError(result.payload.message);
-    }
-  };
+    },
+    onError: (error) => alertError(error.message),
+  });
 
   return (
-    <form className="card space-y-5 p-6" onSubmit={onSubmit} noValidate aria-label="Form password">
+    <form className="card space-y-5 p-6" onSubmit={handleSubmit} noValidate aria-label="Form password">
       <h2 className="flex items-center gap-2 text-base font-bold text-slate-900">
         <IconKey className="h-5 w-5 text-blue-700" aria-hidden="true" />
         Ganti password
       </h2>
-      <FormField id="current-password" type="password" label="Password lama" value={currentPassword} onChange={onCurrentChange} error={errors.currentPassword} autoComplete="current-password" />
-      <FormField id="new-password" type="password" label="Password baru" value={newPassword} onChange={onNewChange} error={errors.newPassword} hint="Minimal 8 karakter, berisi huruf dan angka." autoComplete="new-password" />
-      <FormField id="confirm-password" type="password" label="Konfirmasi password baru" value={confirmPassword} onChange={onConfirmChange} error={errors.confirmPassword} autoComplete="new-password" />
+      <FormField type="password" label="Password lama" value={currentPassword} onChange={onCurrentChange} error={errors.currentPassword} autoComplete="current-password" />
+      <FormField type="password" label="Password baru" value={newPassword} onChange={onNewChange} error={errors.newPassword} hint="Minimal 8 karakter, berisi huruf dan angka." autoComplete="new-password" />
+      <FormField type="password" label="Konfirmasi password baru" value={confirmPassword} onChange={onConfirmChange} error={errors.confirmPassword} autoComplete="new-password" />
       <div className="flex justify-end">
-        <button type="submit" className="btn-primary" disabled={saving}>
-          {saving ? 'Menyimpan...' : 'Ganti password'}
+        <button type="submit" className="btn-primary" disabled={submitting}>
+          {submitting ? 'Menyimpan...' : 'Ganti password'}
         </button>
       </div>
     </form>

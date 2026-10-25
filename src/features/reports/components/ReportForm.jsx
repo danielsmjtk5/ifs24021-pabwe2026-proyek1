@@ -1,5 +1,6 @@
-import { useState } from 'react';
 import FormField from '../../../components/FormField';
+import { alertError } from '../../../components/alerts';
+import useFormSubmit from '../../../hooks/useFormSubmit';
 import useInput from '../../../hooks/useInput';
 import { CATEGORIES, PRIORITIES, validateReport } from '../../../helpers/toolsHelper';
 import PropTypes from 'prop-types';
@@ -9,48 +10,41 @@ const EMPTY = { title: '', category: '', location: '', description: '', priority
 /**
  * Formulir laporan dipakai untuk membuat dan mengubah laporan. State formulir
  * cukup disimpan lokal; Redux hanya dipakai saat data dikirim ke API.
+ * `onSubmit(values)` mengembalikan hasil `useThunk` sehingga error dari server
+ * ditampilkan langsung di field yang bersangkutan.
  */
-function ReportForm({ initialValues = EMPTY, submitLabel, onSubmit, onCancel, serverErrors = {} }) {
+function ReportForm({ initialValues = EMPTY, submitLabel, onSubmit, onSuccess, onCancel }) {
   const [title, onTitleChange] = useInput(initialValues.title);
   const [category, onCategoryChange] = useInput(initialValues.category);
   const [location, onLocationChange] = useInput(initialValues.location);
   const [description, onDescriptionChange] = useInput(initialValues.description);
   const [priority, onPriorityChange] = useInput(initialValues.priority);
-  const [errors, setErrors] = useState({});
-  const [submitting, setSubmitting] = useState(false);
-
-  const shown = { ...serverErrors, ...errors };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    const values = {
+  const { errors, submitting, handleSubmit } = useFormSubmit({
+    getValues: () => ({
       title: title.trim(),
       category,
       location: location.trim(),
       description: description.trim(),
       priority,
-    };
-    const found = validateReport(values);
-    setErrors(found);
-    if (Object.keys(found).length) return;
-    setSubmitting(true);
-    await onSubmit(values);
-    setSubmitting(false);
-  };
+    }),
+    validate: validateReport,
+    submit: onSubmit,
+    onSuccess,
+    onError: (error) => alertError(error.message),
+  });
 
   return (
     <form className="card space-y-5 p-6" onSubmit={handleSubmit} noValidate>
       <FormField
-        id="title"
         label="Judul laporan"
         placeholder="Contoh: Lampu kamar mandi mati"
         value={title}
         onChange={onTitleChange}
-        error={shown.title}
+        error={errors.title}
         maxLength={100}
       />
       <div className="grid gap-5 sm:grid-cols-2">
-        <FormField id="category" as="select" label="Kategori kerusakan" value={category} onChange={onCategoryChange} error={shown.category}>
+        <FormField as="select" label="Kategori kerusakan" value={category} onChange={onCategoryChange} error={errors.category}>
           <option value="">Pilih kategori</option>
           {CATEGORIES.map((c) => (
             <option key={c.value} value={c.value}>
@@ -58,7 +52,7 @@ function ReportForm({ initialValues = EMPTY, submitLabel, onSubmit, onCancel, se
             </option>
           ))}
         </FormField>
-        <FormField id="priority" as="select" label="Tingkat prioritas" value={priority} onChange={onPriorityChange} error={shown.priority}>
+        <FormField as="select" label="Tingkat prioritas" value={priority} onChange={onPriorityChange} error={errors.priority}>
           <option value="">Pilih prioritas</option>
           {PRIORITIES.map((p) => (
             <option key={p.value} value={p.value}>
@@ -68,23 +62,21 @@ function ReportForm({ initialValues = EMPTY, submitLabel, onSubmit, onCancel, se
         </FormField>
       </div>
       <FormField
-        id="location"
         label="Lokasi fasilitas"
         placeholder="Contoh: Gedung A Lantai 2, Kamar A-201"
         value={location}
         onChange={onLocationChange}
-        error={shown.location}
+        error={errors.location}
         maxLength={100}
       />
       <FormField
-        id="description"
         as="textarea"
         rows={5}
         label="Deskripsi kerusakan"
         placeholder="Jelaskan kerusakan, sejak kapan terjadi, dan dampaknya."
         value={description}
         onChange={onDescriptionChange}
-        error={shown.description}
+        error={errors.description}
         hint={`${description.length}/1000 karakter`}
         maxLength={1000}
       />
@@ -110,8 +102,8 @@ ReportForm.propTypes = {
   }),
   submitLabel: PropTypes.string.isRequired,
   onSubmit: PropTypes.func.isRequired,
+  onSuccess: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired,
-  serverErrors: PropTypes.objectOf(PropTypes.string),
 };
 
 export default ReportForm;

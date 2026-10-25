@@ -1,31 +1,23 @@
-import { useState } from 'react';
 import Modal from '../../../components/Modal';
 import FormField from '../../../components/FormField';
+import useFormSubmit from '../../../hooks/useFormSubmit';
 import useInput from '../../../hooks/useInput';
 import { validateNote } from '../../../helpers/toolsHelper';
 import PropTypes from 'prop-types';
 
 function NoteModal({ onClose, onSubmit }) {
   const [note, onNoteChange] = useInput('');
-  const [errors, setErrors] = useState({});
-  const [submitting, setSubmitting] = useState(false);
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    const found = validateNote({ note });
-    setErrors(found);
-    if (Object.keys(found).length) return;
-    setSubmitting(true);
-    const ok = await onSubmit({ note: note.trim() });
-    setSubmitting(false);
-    if (ok) onClose();
-  };
+  const { errors, submitting, handleSubmit } = useFormSubmit({
+    getValues: () => ({ note: note.trim() }),
+    validate: validateNote,
+    submit: onSubmit,
+    onSuccess: onClose,
+  });
 
   return (
     <Modal title="Tambah catatan tindak lanjut" description="Catatan dapat dilihat oleh pelapor." onClose={onClose}>
       <form className="space-y-4" onSubmit={handleSubmit} noValidate>
         <FormField
-          id="follow-up-note"
           as="textarea"
           rows={4}
           label="Catatan"

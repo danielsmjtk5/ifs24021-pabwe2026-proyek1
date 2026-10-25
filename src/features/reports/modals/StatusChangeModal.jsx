@@ -1,6 +1,6 @@
-import { useState } from 'react';
 import Modal from '../../../components/Modal';
 import FormField from '../../../components/FormField';
+import useFormSubmit from '../../../hooks/useFormSubmit';
 import useInput from '../../../hooks/useInput';
 import { statusLabel, validateStatusChange } from '../../../helpers/toolsHelper';
 import PropTypes from 'prop-types';
@@ -10,19 +10,12 @@ function StatusChangeModal({ report, onClose, onSubmit }) {
   const options = report.permissions.nextStatuses;
   const [status, onStatusChange] = useInput(options[0]);
   const [note, onNoteChange] = useInput('');
-  const [errors, setErrors] = useState({});
-  const [submitting, setSubmitting] = useState(false);
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    const found = validateStatusChange({ status, note });
-    setErrors(found);
-    if (Object.keys(found).length) return;
-    setSubmitting(true);
-    const ok = await onSubmit({ status, note: note.trim() });
-    setSubmitting(false);
-    if (ok) onClose();
-  };
+  const { errors, submitting, handleSubmit } = useFormSubmit({
+    getValues: () => ({ status, note: note.trim() }),
+    validate: validateStatusChange,
+    submit: onSubmit,
+    onSuccess: onClose,
+  });
 
   return (
     <Modal
@@ -31,7 +24,7 @@ function StatusChangeModal({ report, onClose, onSubmit }) {
       onClose={onClose}
     >
       <form className="space-y-4" onSubmit={handleSubmit} noValidate>
-        <FormField id="new-status" as="select" label="Status baru" value={status} onChange={onStatusChange} error={errors.status}>
+        <FormField as="select" label="Status baru" value={status} onChange={onStatusChange} error={errors.status}>
           {options.map((value) => (
             <option key={value} value={value}>
               {statusLabel(value)}
@@ -39,7 +32,6 @@ function StatusChangeModal({ report, onClose, onSubmit }) {
           ))}
         </FormField>
         <FormField
-          id="status-note"
           as="textarea"
           rows={3}
           label={status === 'ditolak' ? 'Alasan penolakan' : 'Catatan (opsional)'}

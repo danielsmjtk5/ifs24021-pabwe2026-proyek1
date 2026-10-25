@@ -1,41 +1,27 @@
-import { useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useAppDispatch } from '../../../app/hooks';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { IconAlertCircle, IconLogin2 } from '@tabler/icons-react';
 import FormField from '../../../components/FormField';
+import useFormSubmit from '../../../hooks/useFormSubmit';
 import useInput from '../../../hooks/useInput';
+import useThunk from '../../../hooks/useThunk';
 import { validateLogin } from '../../../helpers/toolsHelper';
 import { loginUser } from '../states/authSlice';
 
 function LoginPage() {
   const [email, onEmailChange] = useInput('');
   const [password, onPasswordChange] = useInput('');
-  const [errors, setErrors] = useState({});
-  const [serverError, setServerError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   const sessionExpired = useSelector((state) => state.auth.sessionExpired);
-  const dispatch = useAppDispatch();
+  const run = useThunk();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const onSubmit = async (event) => {
-    event.preventDefault();
-    setServerError('');
-    const found = validateLogin({ email, password });
-    setErrors(found);
-    if (Object.keys(found).length) return;
-
-    setSubmitting(true);
-    const result = await dispatch(loginUser({ email: email.trim(), password }));
-    setSubmitting(false);
-    if (loginUser.fulfilled.match(result)) {
-      navigate(location.state?.from || '/', { replace: true });
-    } else {
-      setServerError(result.payload.message);
-      setErrors(result.payload.errors || {});
-    }
-  };
+  const { errors, serverError, submitting, handleSubmit } = useFormSubmit({
+    getValues: () => ({ email: email.trim(), password }),
+    validate: validateLogin,
+    submit: (values) => run(loginUser(values)),
+    onSuccess: () => navigate(location.state?.from || '/', { replace: true }),
+  });
 
   return (
     <div>
@@ -54,7 +40,7 @@ function LoginPage() {
         </div>
       )}
 
-      <form className="mt-6 space-y-5" onSubmit={onSubmit} noValidate>
+      <form className="mt-6 space-y-5" onSubmit={handleSubmit} noValidate>
         {/* id username/password/btn-submit dipakai audit otomatis Delcom untuk login. */}
         <FormField
           id="username"
