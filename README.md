@@ -11,7 +11,7 @@ Institut Teknologi Del, Tahun Ajaran 2026/2027.
 | | |
 | --- | --- |
 | Disusun oleh | `[11S24021]` – `[DANIEL SIMANJUNTAK]` |
-| Aplikasi (Delcom) | https://ifs24021-pabwe2026-proyek1.s1if.cloud |
+| Aplikasi |https://ifs24021-pabwe2026-proyek1.vercel.app/|
 | REST API (Vercel) | `https://https://ifs24021-pabwe2026-proyek1-backend.vercel.app//api` |
 
 
