@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import DashboardPage from './pages/DashboardPage';
-import { ADMIN, RESIDENT, authState, makeReport, mockApi, renderWithProviders } from '../../test-utils';
+import DashboardPage from './DashboardPage';
+import { ADMIN, RESIDENT, authState, makeReport, mockApi, renderWithProviders } from '../../../test-utils';
 
 const stats = {
   scope: 'all',
@@ -12,6 +12,15 @@ const stats = {
 };
 
 describe('DashboardPage', () => {
+  it('tetap tampil walau respons statistik tidak lengkap', async () => {
+    mockApi({ 'GET /api/reports/stats': { data: { total: 1, recent: [{ id: 4, status: 'menunggu', priority: 'rendah' }] } } });
+    renderWithProviders(<DashboardPage />, { preloadedState: authState(ADMIN) });
+    expect(await screen.findByText('(Tanpa judul)')).toBeInTheDocument();
+    expect(screen.getByLabelText('Statistik laporan')).toHaveTextContent('Menunggu0');
+    expect(screen.getByText('Belum ada data kategori.')).toBeInTheDocument();
+    expect(screen.getByText('Pengguna terhapus')).toBeInTheDocument();
+  });
+
   it('menampilkan statistik dari API untuk admin', async () => {
     mockApi({ 'GET /api/reports/stats': { data: stats } });
     renderWithProviders(<DashboardPage />, { preloadedState: authState(ADMIN) });

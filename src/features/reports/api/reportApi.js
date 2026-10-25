@@ -1,4 +1,5 @@
 import api from '../../../helpers/apiHelper';
+import { normalizeReport, normalizeReportList, normalizeStats } from '../../../helpers/normalizers';
 
 const toPayload = ({ title, category, location, description, priority }) => ({
   title,
@@ -9,29 +10,29 @@ const toPayload = ({ title, category, location, description, priority }) => ({
 });
 
 const reportApi = {
-  getReports(params) {
-    return api.get('/reports', { query: params });
+  async getReports(params) {
+    return normalizeReportList(await api.get('/reports', { query: params }));
   },
   async getReport(id) {
-    return (await api.get(`/reports/${id}`)).report;
+    return normalizeReport((await api.get(`/reports/${id}`)).report);
   },
   async createReport(values) {
-    return (await api.post('/reports', toPayload(values))).report;
+    return normalizeReport((await api.post('/reports', toPayload(values))).report);
   },
   async updateReport(id, values) {
-    return (await api.put(`/reports/${id}`, toPayload(values))).report;
+    return normalizeReport((await api.put(`/reports/${id}`, toPayload(values))).report);
   },
   async deleteReport(id) {
     await api.delete(`/reports/${id}`);
   },
   async changeStatus(id, { status, note }) {
-    return (await api.patch(`/reports/${id}/status`, { status, note })).report;
+    return normalizeReport((await api.patch(`/reports/${id}/status`, { status, note })).report);
   },
   async addNote(id, { note }) {
-    return (await api.post(`/reports/${id}/notes`, { note })).report;
+    return normalizeReport((await api.post(`/reports/${id}/notes`, { note })).report);
   },
-  getStats() {
-    return api.get('/reports/stats');
+  async getStats() {
+    return normalizeStats(await api.get('/reports/stats'));
   },
 };
 
