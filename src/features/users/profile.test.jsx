@@ -1,8 +1,8 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import Swal from 'sweetalert2';
 import { describe, expect, it } from 'vitest';
-import ProfilePage from './ProfilePage';
-import { ADMIN, RESIDENT, authState, mockApi, renderWithProviders } from '../../../test-utils';
+import ProfilePage from './pages/ProfilePage';
+import { ADMIN, RESIDENT, authState, mockApi, renderWithProviders } from '../../test-utils';
 
 describe('ProfilePage', () => {
   it('menampilkan dan memperbarui profil', async () => {

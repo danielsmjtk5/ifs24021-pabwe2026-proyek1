@@ -1,7 +1,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import ReportListPage from './ReportListPage';
-import { ADMIN, RESIDENT, authState, makeReport, mockApi, renderWithProviders } from '../../../test-utils';
+import ReportListPage from './pages/ReportListPage';
+import { ADMIN, RESIDENT, authState, makeReport, mockApi, renderWithProviders } from '../../test-utils';
 
 const reports = [
   makeReport({ id: 1, title: 'Keran bocor', reporter: { id: 3, name: 'Sari Lestari' } }),
